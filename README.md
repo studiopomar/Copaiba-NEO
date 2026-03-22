@@ -1,6 +1,6 @@
-# Copaiba Mini
+# Copaiba NEO
 
-**Copaiba Mini** is a lite, high-performance oto.ini editor for UTAU voicebanks, written in Rust. It focuses on visual precision, speed, and modern user experience.
+**Copaiba NEO** is a lite, high-performance oto.ini editor for UTAU voicebanks, written in Rust. It focuses on visual precision, speed, and modern user experience.
 
 ## Features
 
