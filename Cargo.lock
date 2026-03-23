@@ -900,7 +900,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "copaiba_mini"
+name = "copaiba_neo"
 version = "0.1.0"
 dependencies = [
  "cpal",

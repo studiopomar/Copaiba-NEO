@@ -197,7 +197,7 @@ impl Default for CopaibaApp {
 
             wav_cache: HashMap::new(),
             spec_data_cache: HashMap::new(),
-            encoding: OtoEncoding::Utf8,
+            encoding: OtoEncoding::ShiftJis,
             status: String::from("Abrir um arquivo oto.ini para começar."),
 
             _stream: None,

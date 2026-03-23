@@ -43,8 +43,7 @@ pub struct SpectrogramData {
     pub global_peak: f32,
     pub num_bins: usize,
     pub hop_size: usize,
-    pub sample_rate: u32,
-    pub fft_size: usize,
+    pub sample_rate: f64,
 }
 
 /// Compute FFT magnitudes for the entire audio.
@@ -65,7 +64,13 @@ pub fn compute_spectrogram_data(samples: &[f32], sample_rate: u32, settings: &Sp
     let mut input = fft.make_input_vec();
     let mut output = fft.make_output_vec();
 
-    let num_frames = (samples.len() - fft_size) / hop_size + 1;
+    let half_fft = fft_size / 2;
+    let mut padded = Vec::with_capacity(samples.len() + fft_size);
+    padded.resize(half_fft, 0.0);
+    padded.extend_from_slice(samples);
+    padded.resize(padded.len() + half_fft, 0.0);
+
+    let num_frames = (padded.len() - fft_size) / hop_size + 1;
     let num_bins = fft_size / 2;
 
     let mut frames_mag = Vec::with_capacity(num_frames);
@@ -74,7 +79,7 @@ pub fn compute_spectrogram_data(samples: &[f32], sample_rate: u32, settings: &Sp
     for i in 0..num_frames {
         let start = i * hop_size;
         for j in 0..fft_size {
-            input[j] = samples[start + j] * window[j];
+            input[j] = padded[start + j] * window[j];
         }
         let _ = fft.process(&mut input, &mut output);
 
@@ -92,8 +97,7 @@ pub fn compute_spectrogram_data(samples: &[f32], sample_rate: u32, settings: &Sp
         global_peak,
         num_bins,
         hop_size,
-        sample_rate,
-        fft_size,
+        sample_rate: sample_rate as f64,
     })
 }
 
@@ -130,11 +134,11 @@ pub fn render_spectrogram_view(
     let mut pixels = vec![egui::Color32::BLACK; pixel_width * pixel_height];
 
     for px in 0..pixel_width {
-        let t_ms = view_start_ms + (px as f64 / pixel_width as f64) * view_range_ms;
+        // Sample at the center of the pixel for better alignment
+        let t_ms = view_start_ms + ((px as f64 + 0.5) / pixel_width as f64) * view_range_ms;
         
         let center_sample = t_ms * sr / 1000.0;
-        let frame_start_sample = center_sample - (settings.fft_size as f64 / 2.0);
-        let frame_f = if frame_start_sample < 0.0 { 0.0 } else { frame_start_sample / hop };
+        let frame_f = center_sample / hop;
         
         // Time interpolation bounds (Bicubic requires 4 points)
         let f1 = (frame_f as usize).min(total_frames.saturating_sub(1));

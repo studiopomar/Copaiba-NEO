@@ -1,12 +1,12 @@
 [package]
-name = "copaiba_mini"
+name = "copaiba_neo"
 version = "0.1.0"
 edition = "2021"
-description = "Copaiba Mini — Lite oto.ini editor for UTAU/OpenUTAU"
+description = "Copaiba NEO — oto.ini editor for UTAU/OpenUTAU"
 license = "MIT"
 
 [[bin]]
-name = "copaiba_mini"
+name = "copaiba_neo"
 path = "src/main.rs"
 
 [dependencies]

@@ -7,6 +7,14 @@ use crate::audio::{load_wav, WavData};
 use super::state::CopaibaApp;
 
 impl CopaibaApp {
+    pub fn stop_playback(&mut self) {
+        if let Some(sink) = &self.sink {
+            sink.stop();
+        }
+        self.playback_start = None;
+        self.playback_limit_ms = None;
+    }
+
     pub fn init_audio(&mut self) {
         if self.sink.is_some() { return; }
         if let Ok((stream, handle)) = OutputStream::try_default() {
@@ -28,7 +36,8 @@ impl CopaibaApp {
         let tab = self.cur();
         if let Some(&idx) = tab.filtered.get(tab.selected) {
             if let Some(entry) = tab.entries.get(idx) {
-                if let Some(wav) = self.wav_cache.get(&entry.filename) {
+                let full_path = tab.oto_dir.as_ref().map(|d| d.join(&entry.filename).to_string_lossy().to_string()).unwrap_or_else(|| entry.filename.clone());
+                if let Some(wav) = self.wav_cache.get(&full_path) {
                     sink.stop();
                     let start_idx = if full { 0 } else {
                         ((entry.offset / 1000.0) * wav.sample_rate as f64) as usize

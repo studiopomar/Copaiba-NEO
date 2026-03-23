@@ -19,9 +19,11 @@ impl CopaibaApp {
             let idx_opt = self.cur().filtered.get(tab_selected).copied();
             if let Some(idx) = idx_opt {
                 let (wav_opt, sd_opt) = {
-                    let fname = self.cur().entries[idx].filename.clone();
-                    let wav = self.wav_cache.get(&fname).cloned();
-                    let sd = if self.show_spectrogram { self.spec_data_cache.get(&fname).cloned() } else { None };
+                    let tab = self.cur();
+                    let fname = tab.entries[idx].filename.clone();
+                    let full_path = tab.oto_dir.as_ref().map(|d| d.join(&fname).to_string_lossy().to_string()).unwrap_or(fname);
+                    let wav = self.wav_cache.get(&full_path).cloned();
+                    let sd = if self.show_spectrogram { self.spec_data_cache.get(&full_path).cloned() } else { None };
                     (wav, sd)
                 };
 

@@ -61,11 +61,12 @@ pub struct SpecCache {
     pub view_range: f64,
     pub width: usize,
     pub height: usize,
+    pub data_ptr: usize,
 }
 
 impl Default for SpecCache {
     fn default() -> Self {
-        Self { texture: None, view_start: -1.0, view_range: -1.0, width: 0, height: 0 }
+        Self { texture: None, view_start: -1.0, view_range: -1.0, width: 0, height: 0, data_ptr: 0 }
     }
 }
 
@@ -73,10 +74,11 @@ impl Default for SpecCache {
 pub struct MinimapCache {
     pub texture: Option<egui::TextureHandle>,
     pub width: usize,  // canvas pixel width at which it was built
+    pub data_ptr: usize,
 }
 
 impl Default for MinimapCache {
-    fn default() -> Self { Self { texture: None, width: 0 } }
+    fn default() -> Self { Self { texture: None, width: 0, data_ptr: 0 } }
 }
 
 /// Cached envelope (waveform blocks) texture
@@ -87,11 +89,12 @@ pub struct WaveCache {
     pub width: usize,
     pub height: usize,
     pub scale_y: f32,
+    pub data_ptr: usize,
 }
 
 impl Default for WaveCache {
     fn default() -> Self {
-        Self { texture: None, view_start: -1.0, view_range: -1.0, width: 0, height: 0, scale_y: 1.0 }
+        Self { texture: None, view_start: -1.0, view_range: -1.0, width: 0, height: 0, scale_y: 1.0, data_ptr: 0 }
     }
 }
 
@@ -176,7 +179,7 @@ fn label_for(t: DragTarget) -> &'static str {
 /// Convert ms → pixel x, using plain f64 arguments to avoid borrow issues.
 #[inline]
 fn ms_to_x(ms: f64, view_start: f64, view_range: f64, rect: &egui::Rect) -> f32 {
-    let t = ((ms - view_start) / view_range).clamp(0.0, 1.0);
+    let t = (ms - view_start) / view_range;
     rect.left() + t as f32 * rect.width()
 }
 
@@ -209,36 +212,49 @@ pub fn draw_waveform(
         (None, None)
     };
 
+    // ── Pre-calculate Layout ──────────────────────────────────────────────
+    let dur = wav.duration_ms;
+    let has_spec = spec_data.is_some();
+    let mini_h = if view.show_minimap { 28.0 } else { 0.0 };
+    let gap = if has_spec { 26.0 } else { 0.0 };
+    let avail_h = rect.height() - mini_h - gap;
+    let wave_h = if has_spec { avail_h * (1.0 - view.spec_height_ratio) } else { avail_h };
+    
+    let wave_outer_rect = Rect::from_min_max(rect.min, Pos2::new(rect.max.x, rect.min.y + wave_h));
+    let wave_rect = wave_outer_rect.shrink(2.0);
+    
+    let axis_rect = Rect::from_min_max(Pos2::new(rect.min.x, wave_outer_rect.max.y), Pos2::new(rect.max.x, wave_outer_rect.max.y + gap));
+    let spec_outer_rect = if has_spec { Rect::from_min_max(Pos2::new(rect.min.x, axis_rect.max.y), rect.max) } else { Rect::NOTHING };
+    
+    let (mini_outer_rect, mini_rect) = if let Some(ref resp) = mini_resp {
+        let r = resp.rect;
+        (r, r.shrink2(egui::vec2(2.0, 4.0)))
+    } else {
+        (Rect::NOTHING, Rect::NOTHING)
+    };
+
+    // ── Resizer Interaction ───────────────────────────────────────────────
+    if has_spec {
+        let resizer_id = ui.id().with("spec_resizer");
+        let resizer_resp = ui.interact(axis_rect, resizer_id, egui::Sense::drag());
+        if resizer_resp.dragged() {
+            let dy = resizer_resp.drag_delta().y;
+            let ratio_delta = dy / avail_h;
+            view.spec_height_ratio = (view.spec_height_ratio - ratio_delta).clamp(0.1, 0.9);
+        }
+        if resizer_resp.hovered() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeVertical);
+        }
+    }
+
     // Ensure we don't paint the whole background single color if not needed
     // painter.rect_filled(rect, 0.0, Color32::from_rgb(18, 18, 28));
 
-    // ── Smooth Zoom Interpolation ─────────────────────────────────────────
-    // Cap dt to ~32ms so that on slow frames (big screen) the lerp doesn't
-    // jump instantly to the target. Animation speed is now frame-rate independent
-    // but bounded so it never feels broken on large screens.
-    let dt = (ui.input(|i| i.stable_dt) as f64).min(0.032);
-    let lerp_factor = 1.0 - (-18.0 * dt).exp();
-    
-    let start_diff = (view.target_view_start_ms - view.view_start_ms).abs();
-    let range_diff = (view.target_view_range_ms - view.view_range_ms).abs();
-    let is_animating = start_diff > 0.05 || range_diff > 0.05;
-
-    if is_animating {
-        view.view_start_ms += (view.target_view_start_ms - view.view_start_ms) * lerp_factor;
-        view.view_range_ms += (view.target_view_range_ms - view.view_range_ms) * lerp_factor;
-        // Use a throttled repaint rate instead of "as fast as possible"
-        ui.ctx().request_repaint_after(std::time::Duration::from_millis(16));
-    } else {
-        // Snap to target exactly to stop the animation loop
-        view.view_start_ms = view.target_view_start_ms;
-        view.view_range_ms = view.target_view_range_ms;
-    }
-
-    // ── Zoom via scroll wheel ─────────────────────────────────────────────
+    // ── Interaction: Zoom, Pan, Minimap ──────────────────────────────────
     if response.hovered() {
         // Track mouse position in ms (on screen)
         if let Some(pos) = response.hover_pos() {
-            let t = (pos.x - rect.left()) as f64 / rect.width() as f64;
+            let t = (pos.x - wave_rect.left()) as f64 / wave_rect.width() as f64;
             view.mouse_ms = Some(view.view_start_ms + t * view.view_range_ms);
         }
 
@@ -259,12 +275,12 @@ pub fn draw_waveform(
         if zoom_factor != 1.0 {
             let mut center = view.target_view_start_ms + view.target_view_range_ms * 0.5;
             if let Some(pos) = response.hover_pos() {
-                let t = (pos.x - rect.left()) as f64 / rect.width() as f64;
+                let t = (pos.x - wave_rect.left()) as f64 / wave_rect.width() as f64;
                 center = view.view_start_ms + t * view.view_range_ms;
             }
             view.target_view_range_ms = (view.target_view_range_ms * zoom_factor).clamp(10.0, wav.duration_ms.max(10.0));
             if let Some(pos) = response.hover_pos() {
-                let t = (pos.x - rect.left()) as f64 / rect.width() as f64;
+                let t = (pos.x - wave_rect.left()) as f64 / wave_rect.width() as f64;
                 view.target_view_start_ms = center - t * view.target_view_range_ms;
             }
         } else if mods.shift && (scroll_x.abs() > 0.1 || scroll_y.abs() > 0.1) {
@@ -296,62 +312,54 @@ pub fn draw_waveform(
         view.mouse_ms = None;
     }
 
-    // Snapshot view so we can use plain f64 values without re-borrowing `view`
-    let vs = view.view_start_ms;
-    let vr = view.view_range_ms;
-    let ve = vs + vr;
-    let dur = wav.duration_ms;
-
-    let has_spec = spec_data.is_some();
-    let mini_h = if view.show_minimap { 28.0 } else { 0.0 };
-    let gap = if has_spec { 26.0 } else { 0.0 };
-    let avail_h = rect.height() - mini_h - gap;
-    let wave_h = if has_spec { avail_h * (1.0 - view.spec_height_ratio) } else { avail_h };
-    
-    let wave_outer_rect = Rect::from_min_max(rect.min, Pos2::new(rect.max.x, rect.min.y + wave_h));
-    let wave_rect = wave_outer_rect.shrink(2.0);
-    
-    let axis_rect = Rect::from_min_max(Pos2::new(rect.min.x, wave_outer_rect.max.y), Pos2::new(rect.max.x, wave_outer_rect.max.y + gap));
-    
-    // ── Resizer Interaction ───────────────────────────────────────────────
-    if has_spec {
-        let resizer_id = ui.id().with("spec_resizer");
-        let resizer_resp = ui.interact(axis_rect, resizer_id, egui::Sense::drag());
-        if resizer_resp.dragged() {
-            let dy = resizer_resp.drag_delta().y;
-            let ratio_delta = dy / avail_h;
-            view.spec_height_ratio = (view.spec_height_ratio - ratio_delta).clamp(0.1, 0.9);
-        }
-        if resizer_resp.hovered() {
-            ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeVertical);
-        }
+    if response.dragged() && view.drag_target == DragTarget::None {
+        let vr = view.target_view_range_ms;
+        let dms = -(response.drag_delta().x as f64 / wave_rect.width() as f64) * vr;
+        view.target_view_start_ms = (view.target_view_start_ms + dms).clamp(0.0, (dur - vr).max(0.0));
+        view.view_start_ms = view.target_view_start_ms;
     }
 
-    let spec_outer_rect = if has_spec { Rect::from_min_max(Pos2::new(rect.min.x, axis_rect.max.y), rect.max) } else { Rect::NOTHING };
-    
-    let (mini_outer_rect, mini_rect) = if let Some(ref resp) = mini_resp {
-        let r = resp.rect;
-        (r, r.shrink2(egui::vec2(2.0, 4.0)))
-    } else {
-        (Rect::NOTHING, Rect::NOTHING)
-    };
-
-    // ── Minimap Interaction & Pre-calculate Minimap Texture ──────────────
     if view.show_minimap {
         let mini_resp = ui.interact(mini_rect, ui.id().with("minimap"), egui::Sense::click_and_drag());
         if mini_resp.dragged() || mini_resp.clicked() {
             if let Some(pos) = mini_resp.interact_pointer_pos() {
                 let t = ((pos.x - mini_rect.left()) / mini_rect.width()).clamp(0.0, 1.0) as f64;
-                let center_ms = t * dur;
-                view.view_start_ms = (center_ms - view.view_range_ms * 0.5).clamp(0.0, (dur - view.view_range_ms).max(0.0));
+                view.view_start_ms = (t * dur - view.view_range_ms * 0.5).clamp(0.0, (dur - view.view_range_ms).max(0.0));
+                view.target_view_start_ms = view.view_start_ms;
             }
         }
+    }
 
+    // ── Smooth Zoom Interpolation ─────────────────────────────────────────
+    let dt = (ui.input(|i| i.stable_dt) as f64).min(0.032);
+    let lerp_factor = 1.0 - (-18.0 * dt).exp();
+    
+    let start_diff = (view.target_view_start_ms - view.view_start_ms).abs();
+    let range_diff = (view.target_view_range_ms - view.view_range_ms).abs();
+    let is_animating = start_diff > 0.05 || range_diff > 0.05;
+
+    if is_animating {
+        view.view_start_ms += (view.target_view_start_ms - view.view_start_ms) * lerp_factor;
+        view.view_range_ms += (view.target_view_range_ms - view.view_range_ms) * lerp_factor;
+        ui.ctx().request_repaint_after(std::time::Duration::from_millis(16));
+    } else {
+        view.view_start_ms = view.target_view_start_ms;
+        view.view_range_ms = view.target_view_range_ms;
+    }
+
+    // ── Final Snapshots for Rendering ─────────────────────────────────────
+    let vs = view.view_start_ms;
+    let vr = view.view_range_ms;
+    let ve = vs + vr;
+
+    // ── Minimap Interaction & Pre-calculate Minimap Texture ──────────────
+    if view.show_minimap {
         let mini_w = mini_rect.width().max(1.0) as usize;
         let mini_h = mini_rect.height().max(1.0) as usize;
         let cache = &mut view.minimap_cache;
+        let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
         
-        if cache.texture.is_none() || cache.width != mini_w {
+        if cache.texture.is_none() || cache.width != mini_w || cache.data_ptr != cur_wav_ptr {
             let mut img = egui::ColorImage::new([mini_w, mini_h], Color32::TRANSPARENT);
             if mini_w > 0 && !wav.samples.is_empty() {
                 let step = (wav.samples.len() / mini_w).max(1);
@@ -375,6 +383,7 @@ pub fn draw_waveform(
             }
             cache.texture = Some(ui.ctx().load_texture("minimap_cache", img, egui::TextureOptions::LINEAR));
             cache.width = mini_w;
+            cache.data_ptr = cur_wav_ptr;
         }
         
         // Draw cached minimap
@@ -415,7 +424,7 @@ pub fn draw_waveform(
         let step = 500.0f64;
         let mut t = (vs / step).ceil() * step;
         while t <= ve {
-            let x = ms_to_x(t, vs, vr, &rect);
+            let x = ms_to_x(t, vs, vr, &wave_rect);
             painter.line_segment(
                 [Pos2::new(x, axis_rect.top()), Pos2::new(x, axis_rect.top() + 5.0)],
                 Stroke::new(1.0, Color32::GRAY)
@@ -439,12 +448,14 @@ pub fn draw_waveform(
         let cache = &mut view.spec_cache;
         let diff_start = (cache.view_start - vs).abs();
         let diff_range = (cache.view_range - vr).abs();
+        let cur_sd_ptr = std::sync::Arc::as_ptr(&sd.frames_mag) as usize;
         
         // Use the global is_animating to decide if we wait
         let needs_update = cache.texture.is_none()
             || (!is_animating && (diff_start > 0.05 || diff_range > 0.05))
             || cache.width != pw
-            || cache.height != ph;
+            || cache.height != ph
+            || cache.data_ptr != cur_sd_ptr;
 
         if needs_update {
             let img = render_spectrogram_view(sd, vs, vr, pw, ph, spec_settings);
@@ -454,6 +465,7 @@ pub fn draw_waveform(
             cache.view_range = vr;
             cache.width = pw;
             cache.height = ph;
+            cache.data_ptr = cur_sd_ptr;
         }
 
         if let Some(ref tex) = cache.texture {
@@ -504,6 +516,7 @@ pub fn draw_waveform(
         } else {
             // Zoomed out: Use WaveCache texture
             let cache = &mut view.wave_cache;
+            let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
             
             let needs_update = cache.texture.is_none()
                 || (!is_animating && (
@@ -512,7 +525,8 @@ pub fn draw_waveform(
                     || (cache.scale_y - view.scale_y).abs() > 0.01
                 ))
                 || cache.width != px_w
-                || cache.height != wave_rect.height() as usize;
+                || cache.height != wave_rect.height() as usize
+                || cache.data_ptr != cur_wav_ptr;
 
             if needs_update {
                 let wh = wave_rect.height() as usize;
@@ -541,6 +555,7 @@ pub fn draw_waveform(
                 cache.scale_y = view.scale_y;
                 cache.width = px_w;
                 cache.height = wh;
+                cache.data_ptr = cur_wav_ptr;
             }
 
             if let Some(ref tex) = cache.texture {
@@ -560,7 +575,7 @@ pub fn draw_waveform(
         let step = 50.0f64;
         let mut t = (vs / step).ceil() * step;
         while t <= ve {
-            let x = ms_to_x(t, vs, vr, &rect);
+            let x = ms_to_x(t, vs, vr, &wave_rect);
             painter.line_segment(
                 [Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())],
                 Stroke::new(0.5, Color32::from_rgba_premultiplied(80, 80, 100, 120)),
@@ -605,7 +620,7 @@ pub fn draw_waveform(
             let mut best = grab_r * 2.0;
             let mut pick = DragTarget::None;
             for (t, ms) in &lines {
-                let d = (pos.x - ms_to_x(*ms, vs, vr, &rect)).abs();
+                let d = (pos.x - ms_to_x(*ms, vs, vr, &wave_rect)).abs();
                 if d < best { best = d; pick = *t; }
             }
             view.drag_target = pick;
@@ -615,7 +630,7 @@ pub fn draw_waveform(
     // ── Apply drag to params ──────────────────────────────────────────────
     if response.dragged() && view.drag_target != DragTarget::None {
         if let Some(pos) = response.interact_pointer_pos() {
-            let mut ms = (view.view_start_ms + ((pos.x - rect.left()) as f64 / rect.width() as f64) * view.view_range_ms).round();
+            let mut ms = (view.view_start_ms + ((pos.x - wave_rect.left()) as f64 / wave_rect.width() as f64) * view.view_range_ms).round();
             
             if view.snap_to_peaks {
                 let center_idx = (ms * wav.sample_rate as f64 / 1000.0) as usize;
@@ -718,18 +733,8 @@ pub fn draw_waveform(
         }
     }
 
-    // ── Pan (drag on background) ──────────────────────────────────────────
-    if response.dragged() && view.drag_target == DragTarget::None {
-        let dms = -(response.drag_delta().x as f64 / rect.width() as f64) * vr;
-        view.target_view_start_ms =
-            (view.target_view_start_ms + dms).clamp(0.0, (dur - vr).max(0.0));
-        // Also snap interpolated view slightly during active drag for responsiveness
-        view.view_start_ms = view.target_view_start_ms;
-    }
 
-    // Re-snapshot after pan/edit
-    let vs2 = view.view_start_ms;
-    let vr2 = view.view_range_ms;
+    // Snapshot after pan/edit (unused, we use unified vs/vr)
     let cutoff_ms2 = abs_cutoff(entry.cutoff, entry.offset);
     let lines2 = [
         (DragTarget::Offset,    entry.offset),
@@ -742,8 +747,8 @@ pub fn draw_waveform(
     // ── Consonant shaded region (light pink from Offset to Consonant) ─────
     {
         let t = mini_outer_rect.top();
-        let cons_x_left  = ms_to_x(entry.offset, vs2, vr2, &rect).clamp(rect.left(), rect.right());
-        let cons_x_right = ms_to_x(entry.offset + entry.consonant, vs2, vr2, &rect).clamp(rect.left(), rect.right());
+        let cons_x_left  = ms_to_x(entry.offset, vs, vr, &wave_rect).clamp(wave_rect.left(), wave_rect.right());
+        let cons_x_right = ms_to_x(entry.offset + entry.consonant, vs, vr, &wave_rect).clamp(wave_rect.left(), wave_rect.right());
         if cons_x_right > cons_x_left {
             painter.rect_filled(
                 Rect::from_min_max(Pos2::new(cons_x_left, rect.top()), Pos2::new(cons_x_right, t)),
@@ -754,8 +759,8 @@ pub fn draw_waveform(
     }
 
     // ── Shaded inactive regions ───────────────────────────────────────────
-    let ox = ms_to_x(entry.offset, vs2, vr2, &rect).clamp(rect.left(), rect.right());
-    let cx = ms_to_x(cutoff_ms2,   vs2, vr2, &rect).clamp(rect.left(), rect.right());
+    let ox = ms_to_x(entry.offset, vs, vr, &wave_rect).clamp(wave_rect.left(), wave_rect.right());
+    let cx = ms_to_x(cutoff_ms2,   vs, vr, &wave_rect).clamp(wave_rect.left(), wave_rect.right());
     let st = mini_outer_rect.top();
     let shade = Color32::from_rgba_premultiplied(0, 0, 0, 100);
     painter.rect_filled(
@@ -791,8 +796,8 @@ pub fn draw_waveform(
 
     // ── Playback Cursor (Dotted Yellow Line) ─────────────────────────────
     if let Some(cursor_ms) = playback_cursor {
-        let px = ms_to_x(cursor_ms, vs2, vr2, &rect);
-        if px >= rect.left() && px <= rect.right() {
+        let px = ms_to_x(cursor_ms, vs, vr, &wave_rect);
+        if px >= wave_rect.left() && px <= wave_rect.right() {
             let mut y = rect.top();
             while y < rect.bottom() {
                 painter.line_segment(
@@ -806,8 +811,8 @@ pub fn draw_waveform(
 
     // ── Draw parameter lines (TOP LAYER) ──────────────────────────────────
     for (target, ms) in &lines2 {
-        let x = ms_to_x(*ms, vs2, vr2, &rect);
-        if x < rect.left() - 2.0 || x > rect.right() + 2.0 { continue; }
+        let x = ms_to_x(*ms, vs, vr, &wave_rect);
+        if x < wave_rect.left() - 2.0 || x > wave_rect.right() + 2.0 { continue; }
         
         let col   = color_for(*target);
         let width = if view.drag_target == *target { 2.5 } else { 1.5 };

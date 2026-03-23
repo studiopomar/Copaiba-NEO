@@ -345,7 +345,8 @@ impl CopaibaApp {
             (tab.entries[idx].filename.clone(), tab.oto_dir.clone())
         };
 
-        if self.wav_cache.contains_key(&fname) { return; }
+        let full_path_key = dir_opt.as_ref().map(|d| d.join(&fname).to_string_lossy().to_string()).unwrap_or_else(|| fname.clone());
+        if self.wav_cache.contains_key(&full_path_key) { return; }
 
         let dir_opt: Option<PathBuf> = dir_opt;
         if let Some(dir) = dir_opt {
@@ -365,10 +366,11 @@ impl CopaibaApp {
 
                     let dur = wav_with_spec.wav.duration_ms;
                     let spec_set = self.spec_settings.clone();
+                    let full_path_key = wav_path.to_string_lossy().to_string();
                     if let Some(sd) = crate::spectrogram::compute_spectrogram_data(&wav_with_spec.wav.samples, wav_with_spec.wav.sample_rate, &spec_set) {
-                        self.spec_data_cache.insert(fname.clone(), sd);
+                        self.spec_data_cache.insert(full_path_key.clone(), sd);
                     }
-                    self.wav_cache.insert(fname, wav_with_spec.wav);
+                    self.wav_cache.insert(full_path_key, wav_with_spec.wav);
 
                     let persistent = self.persistent_zoom;
                     if !persistent {

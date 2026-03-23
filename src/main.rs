@@ -125,5 +125,6 @@ fn apply_dark_theme(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
     style.spacing.item_spacing = Vec2::new(6.0, 4.0);
     style.spacing.button_padding = Vec2::new(8.0, 4.0);
+    style.interaction.selectable_labels = false;
     ctx.set_style(style);
 }

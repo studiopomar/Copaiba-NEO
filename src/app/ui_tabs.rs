@@ -26,7 +26,12 @@ impl CopaibaApp {
                         } else {
                             let name = format!("{}{} ", self.tabs[i].name, if self.tabs[i].dirty { "*" } else { "" });
                             let resp = ui.selectable_label(is_active, name);
-                            if resp.clicked() { self.current_tab = i; }
+                            if resp.clicked() { 
+                                if self.current_tab != i {
+                                    self.stop_playback();
+                                    self.current_tab = i;
+                                }
+                            }
                             if resp.double_clicked() { self.renaming_tab = Some(i); }
                         }
 
