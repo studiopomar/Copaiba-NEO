@@ -1,6 +1,6 @@
-# Copaiba Mini
+# Copaiba NEO
 
-**Copaiba Mini** is a lite, high-performance oto.ini editor for UTAU voicebanks, written in Rust. It focuses on visual precision, speed, and modern user experience.
+**Copaiba NEO** is a lite, high-performance oto.ini editor for UTAU voicebanks, written in Rust. It focuses on visual precision, speed, and modern user experience.
 
 ## Features
 
@@ -11,7 +11,7 @@
   - Sub-millisecond parameter editing with **Copaiba (QWERT)**, **SetParam (F1-F5)**, or **Custom** keyboard profiles.
   - SRP (Snap Relative to Preutterance) and SRnA (Snap Relative to Nothing) modes for smart offset adjustments.
   - Excel-style grid for bulk editing, multi-selection (Ctrl/Shift), and keyboard navigation.
-  - Interactive minimap for coarse navigation and markers that snap to peak samples.
+  - Interactive NEOmap for coarse navigation and markers that snap to peak samples.
 - **Plugins & Automation**:
   - **Alias Sorter**: Organize your voicebank by alphabet, file, type, etc.
   - **Consistency Checker**: Detect and jump to errors like missing files or invalid timing.
