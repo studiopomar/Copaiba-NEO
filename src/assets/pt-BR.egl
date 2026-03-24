@@ -246,4 +246,4 @@ file_ops.status.save_error = Erro ao salvar:
 file_ops.label.new_set = Novo Set
 # State
 state.tab.default_name = Novo Set
-state.ui.status.ready = Abrir um arquivo oto.ini para começar.
+state.ui.status.ready = Abra um arquivo oto.ini para começar.
