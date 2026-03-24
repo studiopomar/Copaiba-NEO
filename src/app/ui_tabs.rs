@@ -1,3 +1,4 @@
+use egui_i18n::tr;
 use super::state::CopaibaApp;
 
 impl CopaibaApp {
@@ -5,7 +6,7 @@ impl CopaibaApp {
         egui::TopBottomPanel::top("toolbar").min_height(32.0).show(ctx, |ui| {
             ui.horizontal_centered(|ui| {
                 ui.add_space(4.0);
-                if ui.button("➕ Nova Aba").clicked() {
+                if ui.button(format!("➕ {}", tr!("tabs.btn.new_tab"))).clicked() {
                     self.tabs.push(super::state::TabState::default());
                     self.current_tab = self.tabs.len() - 1;
                 }
@@ -36,7 +37,7 @@ impl CopaibaApp {
                         }
 
                         if self.tabs.len() > 1 && !is_renaming {
-                            if ui.small_button("x").on_hover_text("Fechar aba").clicked() { to_remove = Some(i); }
+                            if ui.small_button("x").on_hover_text(tr!("tabs.btn.close_tab")).clicked() { to_remove = Some(i); }
                         }
                     });
                     ui.add_space(8.0);
@@ -47,7 +48,7 @@ impl CopaibaApp {
                 }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("📁 Abrir pasta").clicked() { self.open_voicebank_dir(); }
+                    if ui.button(format!("📁 {}", tr!("tabs.btn.open_folder"))).clicked() { self.open_voicebank_dir(); }
                 });
             });
         });

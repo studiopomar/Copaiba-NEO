@@ -911,6 +911,7 @@ dependencies = [
  "cpal",
  "eframe",
  "egui",
+ "egui-i18n",
  "egui_extras",
  "egui_plot",
  "encoding_rs",
@@ -1240,6 +1241,16 @@ dependencies = [
  "profiling",
  "ron",
  "serde",
+]
+
+[[package]]
+name = "egui-i18n"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4b7cc9324798efd4ff992f7d4a1ef92589529a4ead5b2e659b9bff86476e2cc"
+dependencies = [
+ "log",
+ "once_cell",
 ]
 
 [[package]]

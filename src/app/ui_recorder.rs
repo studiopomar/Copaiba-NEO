@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use egui::RichText;
 use egui_plot::{Plot, Line, PlotPoints};
+use egui_i18n::tr;
 
 use crate::audio::WavData;
 use super::state::CopaibaApp;
@@ -12,7 +13,8 @@ impl CopaibaApp {
         if !self.ui.show_recorder { return; }
 
         let mut open = true;
-        egui::Window::new("Regravar Alias")
+        egui::Window::new(format!("🎙️ {}", tr!("recorder.window.name")))
+            .id(egui::Id::new("recorder"))
             .open(&mut open)
             .resizable(true)
             .default_size([500.0, 400.0])
@@ -21,7 +23,7 @@ impl CopaibaApp {
                 if let Some(&idx) = tab.filtered.get(tab.selected) {
                     let entry = tab.entries[idx].clone();
                     ui.horizontal(|ui| {
-                        ui.heading(format!("Regravando: {}", entry.alias));
+                        ui.heading(format!("{} {}", tr!("recorder.label.re_rec"), entry.alias));
                         ui.label(RichText::new(format!(" ({})", entry.filename)).weak());
                     });
                     ui.separator();
@@ -29,14 +31,14 @@ impl CopaibaApp {
                     if self.audio.is_recording {
                         ui.vertical_centered(|ui| {
                             ui.add_space(20.0);
-                            ui.label(RichText::new("🔴 Gravando...").color(egui::Color32::RED).size(24.0));
+                            ui.label(RichText::new(format!("🔴 {}", tr!("recorder.label.rec_status"))).color(egui::Color32::RED).size(24.0));
                             ui.add_space(20.0);
-                            if ui.button(RichText::new("⏹ Parar Gravação").size(18.0)).clicked() {
+                            if ui.button(RichText::new(format!("⏹ {}", tr!("recorder.label.rec_stop"))).size(18.0)).clicked() {
                                 self.stop_recording();
                             }
                         });
                     } else if let Some(recorded) = self.audio.recorded_wav.clone() {
-                        ui.label("Gravação concluída. Revise abaixo:");
+                        ui.label(tr!("recorder.label.rec_compl"));
                         
                         // Mini waveform preview
                         let points: PlotPoints = recorded.samples.iter().enumerate()
@@ -57,10 +59,10 @@ impl CopaibaApp {
 
                         ui.add_space(8.0);
                         ui.horizontal(|ui| {
-                            if ui.button("▶ Escutar").clicked() {
+                            if ui.button(format!("▶ {}", tr!("recorder.label.listen"))).clicked() {
                                 self.play_wav_data(recorded);
                             }
-                            if ui.button("⏺ Regravar").clicked() {
+                            if ui.button(format!("⏺ {}", tr!("recorder.label.redo"))).clicked() {
                                 self.audio.recorded_wav = None;
                                 self.start_recording();
                             }
@@ -69,16 +71,16 @@ impl CopaibaApp {
                         ui.add_space(16.0);
                         ui.separator();
                         ui.horizontal(|ui| {
-                            if ui.button(RichText::new("✅ Substituir Gravação Atual").color(egui::Color32::GOLD)).clicked() {
+                            if ui.button(RichText::new(format!("✅ {}", tr!("recorder.label.subst_rec"))).color(egui::Color32::GOLD)).clicked() {
                                 if let Err(e) = self.save_recorded_wav(&entry.filename) {
-                                    self.ui.status = format!("Erro ao salvar: {}", e);
+                                    self.ui.status = format!("{} {}", tr!("recorder.label.error"), e);
                                 } else {
-                                    self.ui.status = format!("Gravado com sucesso: {}", entry.alias);
+                                    self.ui.status = format!("{} {}", tr!("recorder.label.success"), entry.alias);
                                     self.ui.show_recorder = false;
                                     self.audio.recorded_wav = None;
                                 }
                             }
-                            if ui.button("❌ Descartar").clicked() {
+                            if ui.button(format!("❌ {}", tr!("recorder.label.discard"))).clicked() {
                                 self.audio.recorded_wav = None;
                                 self.ui.show_recorder = false;
                             }
@@ -86,15 +88,15 @@ impl CopaibaApp {
                     } else {
                         ui.vertical_centered(|ui| {
                             ui.add_space(40.0);
-                            if ui.button(RichText::new("⏺ Iniciar Gravação").size(24.0)).clicked() {
+                            if ui.button(RichText::new(format!("⏺ {}", tr!("recorder.label.start_rec"))).size(24.0)).clicked() {
                                 self.start_recording();
                             }
                             ui.add_space(40.0);
                         });
                     }
                 } else {
-                    ui.label("Nenhum alias selecionado na tabela.");
-                    if ui.button("Fechar").clicked() { self.ui.show_recorder = false; }
+                    ui.label(tr!("recorder.label.no_alias"));
+                    if ui.button(tr!("btn.close")).clicked() { self.ui.show_recorder = false; }
                 }
             });
 
@@ -112,10 +114,10 @@ impl CopaibaApp {
                 self.audio.recorder_stream = Some(stream);
                 self.audio.recorder_sample_rate = rate;
                 self.audio.is_recording = true;
-                self.ui.status = format!("Gravando a {} Hz...", rate);
+                self.ui.status = format!("{} {} Hz...", tr!("recorder.label.recording_at"), rate);
             }
             Err(e) => {
-                self.ui.status = format!("Erro ao iniciar gravação: {}", e);
+                self.ui.status = format!("{} {}", tr!("recorder.label.error_start_rec"), e);
             }
         }
     }
@@ -168,7 +170,7 @@ impl CopaibaApp {
             
             Ok(())
         } else {
-            Err("Nenhuma gravação para salvar".to_string())
+            Err(tr!("recorder.label.no_rec_save").to_string())
         }
     }
 }

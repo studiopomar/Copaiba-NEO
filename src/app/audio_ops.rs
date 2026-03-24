@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use egui_i18n::tr;
 use rodio::{OutputStream, Sink};
 
 use crate::audio::{load_wav, WavData};
@@ -30,7 +31,7 @@ impl CopaibaApp {
         self.init_audio();
         let sink = match &self.audio.sink {
             Some(s) => s,
-            None => { self.ui.status = "Erro: Dispositivo de áudio não encontrado.".to_string(); return; }
+            None => { self.ui.status = tr!("audio.error.no_device").to_string(); return; }
         };
 
         let tab = self.cur();
@@ -77,7 +78,7 @@ impl CopaibaApp {
     pub fn resample_current(&mut self) {
         if self.config.resampler_path.is_none() {
             if let Some(path) = rfd::FileDialog::new()
-                .set_title("Escolher resampler.exe")
+                .set_title(tr!("audio.resampler.select_file"))
                 .add_filter("Executáveis", &["exe", "bin", "sh"])
                 .pick_file() {
                 self.config.resampler_path = Some(path);
@@ -115,22 +116,22 @@ impl CopaibaApp {
             cmd.arg("120");
             cmd.arg("AA");
 
-            self.ui.status = "Resampling...".to_string();
+            self.ui.status = tr!("audio.resampler.status.resampling").to_string();
             match cmd.output() {
                 Ok(output) => {
                     if output.status.success() {
                         match load_wav(&output_wav) {
                             Ok(ws) => {
                                 self.play_wav_data(ws.wav);
-                                self.ui.status = format!("Resample OK: {}", entry.alias);
+                                self.ui.status = format!("{} {}", tr!("audio.resampler.status.success"), entry.alias);
                             }
-                            Err(e) => { self.ui.status = format!("Erro ao carregar resampler: {e}"); }
+                            Err(e) => { self.ui.status = format!("{} {}", tr!("audio.resampler.status.load_error"), e); }
                         }
                     } else {
-                        self.ui.status = format!("Resampler erro: {}", String::from_utf8_lossy(&output.stderr));
+                        self.ui.status = format!("{} {}", tr!("audio.resampler.status.error"), String::from_utf8_lossy(&output.stderr));
                     }
                 }
-                Err(e) => { self.ui.status = format!("Erro ao executar resampler: {e}"); }
+                Err(e) => { self.ui.status = format!("{} {}", tr!("audio.resampler.status.exec_error"), e); }
             }
         }
     }

@@ -1,5 +1,6 @@
 use egui::RichText;
 use egui_extras::{TableBuilder, Column};
+use egui_i18n::tr;
 use super::state::CopaibaApp;
 
 impl CopaibaApp {
@@ -13,7 +14,7 @@ impl CopaibaApp {
                 {
                     let tab = self.cur_mut();
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new(format!("Parâmetros  (Aliases {}/{})", tab.filtered.len(), tab.entries.len())).strong());
+                        ui.label(RichText::new(format!("{}  ({}/{})", tr!("table.params"), tab.filtered.len(), tab.entries.len())).strong());
                     });
                 }
                 ui.add_space(2.0);
@@ -21,7 +22,7 @@ impl CopaibaApp {
                     let tab = self.cur_mut();
                     ui.add(
                         egui::TextEdit::singleline(&mut tab.filter)
-                            .hint_text("Filtrar aliases...")
+                            .hint_text(tr!("table.filter.hint"))
                             .desired_width(f32::INFINITY)
                     ).changed()
                 };
@@ -52,14 +53,14 @@ impl CopaibaApp {
                     .column(Column::remainder().at_least(80.0))    // Anotações
                     .header(24.0, |mut header| {
                         header.col(|ui| { ui.strong("✔"); });
-                        header.col(|ui| { ui.strong("Arquivo .wav"); });
-                        header.col(|ui| { ui.strong("Alias (fonema)"); });
-                        header.col(|ui| { ui.strong("Offset"); });
-                        header.col(|ui| { ui.strong("Overlap"); });
-                        header.col(|ui| { ui.strong("Preutterance"); });
-                        header.col(|ui| { ui.strong("Consonant"); });
-                        header.col(|ui| { ui.strong("Cutoff"); });
-                        header.col(|ui| { ui.strong("Anotações"); });
+                        header.col(|ui| { ui.strong(tr!("table.col.file")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.alias")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.offset")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.overlap")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.preutter")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.consonant")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.cutoff")); });
+                        header.col(|ui| { ui.strong(tr!("table.col.notes")); });
                     })
                     .body(|body| {
                         body.rows(24.0, filtered.len(), |mut row| {
@@ -113,7 +114,7 @@ impl CopaibaApp {
                                 row.col(|ui| { 
                                     num_col!(ui, &mut entry.cutoff, 7); 
                                     ui.interact_bg(egui::Sense::click()).context_menu(|ui| {
-                                        if ui.button("Inverter Modo (Relativo/Absoluto)").clicked() {
+                                        if ui.button(tr!("table.cutoff.invert")).clicked() {
                                             if entry.cutoff < 0.0 {
                                                 // Convert to positive (relative to end) - approximate
                                                 entry.cutoff = 0.0; 

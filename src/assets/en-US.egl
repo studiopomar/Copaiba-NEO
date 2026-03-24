@@ -1,0 +1,249 @@
+# Buttons
+btn.open = Open
+btn.close = Close
+btn.cancel = Cancel
+btn.save = Save
+btn.save_exit = Save and Exit
+btn.not_save_exit = Exit without Saving
+btn.exe = Run
+btn.apply = Apply
+# Header
+header.voicebank = Voicebank
+header.pitch.label = Pitch:
+header.resampler.select = Select Resampler
+header.resampler.none = None
+header.resampler.test = Test alias
+header.resampler.hover = Configure a resampler before testing!
+header.resampler.status = Configure a resampler first!
+# Home
+home.title = Copaiba NEO
+home.subtitle = oto.ini Editor
+home.btn.open_voicebank = Open Voicebank
+home.label.recent = Recent
+home.btn.open = Open
+home.label.no_recent = No recent voicebank.
+# Menu - File
+menu.file = File
+menu.file.home = Home Screen
+menu.file.open.vb = Open Voicebank...
+menu.file.open.oto = Open oto.ini...
+menu.file.open.explorer = Open Folder in Explorer
+menu.file.save = Save
+menu.file.save_as = Save as...
+menu.file.exit = Exit
+# Menu - Edit
+menu.edit = Edit
+menu.edit.undo = Undo
+menu.edit.redo = Redo
+menu.edit.auto_oto = Auto-oto [WIP]
+menu.edit.auto_oto.hover = Automatically adjusts boundaries based on energy peaks
+menu.edit.snap_mode = Snap Mode
+menu.edit.snap_mode.srp = SRP - Snap Relative to Preutterance
+menu.edit.snap_mode.srna = SRnA - Snap Relative to Nothing
+menu.edit.alias.rename = Rename Alias
+menu.edit.alias.delete = Delete Alias
+# Menu - View
+menu.view = View
+menu.view.spectrogram = Spectrogram
+menu.view.minimap = Minimap
+menu.view.auto_scroll = Auto-scroll to Selected
+menu.view.reset = Reset Views
+# Menu - Play
+menu.play = Playback
+menu.play.segment = Play Segment
+menu.play.audio = Play Full Audio
+menu.play.test = Synthesis Test
+menu.play.on_select = Play Section on Click
+# Menu - Configuration
+menu.config = Settings
+menu.config.general = General Settings
+menu.config.auto_save = Auto-Save
+menu.config.auto_save.time_unit = min
+# Menu - Plugins
+menu.plugins = Plugins
+menu.plugins.consistency_checker = Consistency Checker
+menu.plugins.duplicate_detector = Duplicate Detector
+menu.plugins.pitch_analyzer = Pitch Analyzer
+menu.plugins.alias_sorter = Sort Aliases...
+menu.plugins.batch_rename = Batch Rename
+menu.plugins.batch_edit = Batch Edit
+# Menu - Help
+menu.help = Help
+menu.help.shortcuts = Keyboard Shortcuts
+# Menu - Others
+menu.others.re_record = Re-record Audio
+# Modal - Exit
+modal.exit.window.name = Pending Changes
+modal.exit.label.unsaved_changes = You have unsaved changes. See differences below:
+modal.exit.label.unchanged_but_marked = No changes to parameters (but marked as modified).
+# Modal - Preset
+modal.preset.window.name = Edit Presets
+modal.preset.grid.shortcut = Shortcut
+modal.preset.grid.name = Name
+modal.preset.grid.consonant = Consonant
+modal.preset.grid.cutoff = Cutoff
+modal.preset.grid.preutter = Preutter
+modal.preset.grid.overlap = Overlap
+# Modal - Settings
+modal.settings.window.name = Settings
+modal.settings.general.heading = General
+modal.settings.general.label.language = Language:
+modal.settings.waveform.heading = Waveform View
+modal.settings.waveform.ckb.show_minimap = Show Waveform
+modal.settings.waveform.ckb.persistent_zoom = Keep zoom when switching alias
+modal.settings.waveform.label.color = Waveform Color:
+modal.settings.waveform.label.positive = Positive
+modal.settings.waveform.label.negative = Negative
+modal.settings.waveform.label.spline = Spline Line:
+modal.settings.encoding.heading = Encoding
+modal.settings.encoding.label = Text Encoding:
+modal.settings.spectrogram.heading = Spectrogram
+modal.settings.spectrogram.ckb.hd = Enable HD Spectrogram
+modal.settings.spectrogram.label.fft_size = FFT Size:
+modal.settings.spectrogram.label.hop = Hop Size:
+modal.settings.spectrogram.label.freq_min = Min Freq (Hz):
+modal.settings.spectrogram.label.freq_max = Max Freq (Hz):
+modal.settings.spectrogram.label.noise = Noise Floor (dB):
+modal.settings.spectrogram.label.gama = Gamma (contrast):
+modal.settings.spectrofram.label.palette = Palette:
+modal.settings.spectrogram.ckb.adaptative_norm = Adaptive Normalization
+# Modal - Shortcuts
+modal.shortcuts.window.name = Keyboard Shortcuts
+modal.shortcuts.label.general = General
+modal.shortcuts.label.open_oto = Open oto.ini
+modal.shortcuts.label.save = Save
+modal.shortcuts.label.undo = Undo
+modal.shortcuts.label.redo = Redo
+modal.shortcuts.label.config = Settings
+modal.shortcuts.label.shortcuts = Shortcuts
+modal.shortcuts.label.table = Table
+modal.shortcuts.label.select_all = Select All
+modal.shortcuts.label.del_selection = Delete Selection
+modal.shortcuts.label.duplicate = Duplicate Current
+modal.shortcuts.label.rename = Rename
+modal.shortcuts.label.audio = Audio
+modal.shortcuts.label.play_segment = Play Segment
+modal.shortcuts.label.play_audio = Play Full Audio
+modal.shortcuts.label.synth_test = Synthesis Test
+# Modal - Batch Rename
+modal.batch_rename.window.name = Batch Rename
+modal.batch_rename.label.info = Will only modify visible aliases in current tab filter.
+modal.batch_rename.label.subst = Replace Text:
+modal.batch_rename.label.set = Fixed:
+modal.batch_rename.label.prefix = Prefix:
+modal.batch_rename.label.sufffix = Suffix:
+# Modal - Batch Edit
+modal.batch_edit.window.name = Batch Edit
+modal.batch_edit.label.info = Apply fixed values to all visible aliases (Filter).
+# Modal - Alias Sorter
+modal.org_alias.window.name = Sort Aliases
+modal.org_alias.label.info = Organize table entries.
+modal.org_alias.label.mode = Mode
+modal.org_alias.label.alphabetic = Alphabetical
+modal.org_alias.label.file = File
+modal.org_alias.label.offset = Offset
+modal.org_alias.ckb.group_by_file = Group by File
+# Modal - Consistency Checker
+modal.consistency_checker.window.name = Consistency Checker
+modal.consistency_checker.btn.scan = Scan Now
+modal.consistency_checker.label.issues = Issues found:
+modal.consistency_checker.label.line = Line
+modal.consistency_checker.label.alias = Alias
+modal.consistency_checker.label.message = Message
+# Modal - Duplcate Detector
+modal.duplicate_detector.window.name = Duplicate Detector
+modal.duplicate_detector.label.info = Finds entries that define the same phoneme or are identical.
+modal.duplicate_detector.btn.scan = Scan
+modal.duplicate_detector.label.type = Type
+modal.duplicate_detector.label.alias_a = Alias A
+modal.duplicate_detector.label.alias_b = Alias B
+modal.duplicate_detector.label.action = Action
+modal.duplicate_detector.label.exact = Exact
+modal.duplicate_detector.label.case = Case
+modal.duplicate_detector.label.functional = Functional
+modal.duplicate_detector.label.simmilar = Similar
+modal.duplicate_detector.btn.goto_1 = Go to #1
+modal.duplicate_detector.btn.goto_2 = Go to #2
+modal.duplicate_detector.btn.del_2 = Del #2
+# Modal - Pitch Analyzer
+modal.pitch_analyzer.window.name = Pitch Analyzer
+modal.pitch_analyzer.label.window = Window
+modal.pitch_analyzer.btn.analyze = Analyze
+modal.pitch_analyzer.label.avg = Average Pitch:
+# Recorder
+recorder.window.name = Re-record Alias
+recorder.label.re_rec = Re-recording:
+recorder.label.rec_status = Recording...
+recorder.label.rec_stop = Stop Recording
+recorder.label.rec_compl = Recording complete. Review below:
+recorder.label.listen = Listen
+recorder.label.redo = Re-record
+recorder.label.subst_rec = Replace Current Recording
+recorder.label.error = Error saving:
+recorder.label.success = Saved successfully:
+recorder.label.discard = Discard
+recorder.label.start_rec = Start Recording
+recorder.label.no_alias = No alias selected in table.
+recorder.label.recording_at = Recording at
+recorder.label.error_start_rec = Error starting recording:
+recorder.label.no_rec_save = No recording to save
+recorder.error.no_device = No input device found
+recorder.error.config = Failed to get input config:
+recorder.error.sample_format = Sample format not supported
+recorder.error.create_stream = Failed to create input stream:
+recorder.error.play_stream = Failed to start stream:
+recorder.error.stream = Stream error:
+# Status
+status.label.new_file = New File
+status.label.line = Line:
+status.label.time_elapsed = Session time:
+status.label.saved = Saved!
+status.label.not_saved = Not saved
+# Table
+table.params = Parameters
+table.filter.hint = Filter aliases...
+table.cutoff.invert = Invert Mode (Relative/Absolute)
+table.col.file = .wav File
+table.col.alias = Alias (phoneme)
+table.col.offset = Offset
+table.col.overlap = Overlap
+table.col.preutter = Preutterance
+table.col.consonant = Consonant
+table.col.cutoff = Cutoff
+table.col.notes = Notes
+# Tabs
+tabs.btn.new_tab = New Tab
+tabs.btn.close_tab = Close Tab
+tabs.btn.open_folder = Open Folder
+# Tools
+tools.label.presets = Presets
+tools.btn.edit_presets = Edit Presets...
+tools.label.edit_modes = Edit Modes
+tools.label.srp = SRP
+tools.label.srp_desc = Snap relative to Preutterance
+tools.label.srna = SRnA
+tools.label.srna_desc = Snap relative to moving Offset
+tools.label.auto_oto = Auto-oto (WIP)
+tools.label.auto_oto_desc = Attracts markers to peaks
+tools.label.zoom = Persistent Zoom
+tools.label.zoom_desc = Does not reset zoom when switching alias
+tools.label.status = Status
+tools.label.aliases = Aliases:
+tools.label.filtered = Filtered:
+# Audio
+audio.error.no_device = Error: Audio device not found.
+audio.resampler.select_file = Choose resampler.exe
+audio.resampler.status.resampling = Resampling...
+audio.resampler.status.success = Resample OK:
+audio.resampler.status.load_error = Error loading resampler:
+audio.resampler.status.error = Resampler error:
+audio.resampler.status.exec_error = Error executing resampler:
+# File Ops
+file_ops.status.aliases_loaded = aliases loaded.
+file_ops.status.open_error = Error opening:
+file_ops.status.saved_success = Saved successfully.
+file_ops.status.save_error = Error saving:
+file_ops.label.new_set = New Set
+# State
+state.tab.default_name = New Set
+state.ui.status.ready = Open an oto.ini file to start.

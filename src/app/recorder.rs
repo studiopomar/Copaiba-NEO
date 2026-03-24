@@ -1,4 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use egui_i18n::tr;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -8,10 +9,10 @@ pub fn start_recording(
 ) -> Result<(cpal::Stream, u32), String> {
     let host = cpal::default_host();
     let device = host.default_input_device()
-        .ok_or("Nenhum dispositivo de entrada encontrado")?;
+        .ok_or(tr!("recorder.error.no_device"))?;
 
     let config = device.default_input_config()
-        .map_err(|e| format!("Falha ao obter config de entrada: {}", e))?;
+        .map_err(|e| format!("{} {}", tr!("recorder.error.config"), e))?;
     
     let sample_rate = config.sample_rate().0;
     let channels = config.channels() as usize;
@@ -36,7 +37,7 @@ pub fn start_recording(
                     }
                 }
             },
-            |err| eprintln!("Erro no stream: {}", err),
+            |err| eprintln!("{} {}", tr!("recorder.error.stream"), err),
             None,
         ),
         cpal::SampleFormat::I16 => device.build_input_stream(
@@ -56,12 +57,12 @@ pub fn start_recording(
                     }
                 }
             },
-            |err| eprintln!("Erro no stream: {}", err),
+            |err| eprintln!("{} {}", tr!("recorder.error.stream"), err),
             None,
         ),
-        _ => return Err("Formato de sample não suportado".to_string()),
-    }.map_err(|e| format!("Falha ao criar stream de entrada: {}", e))?;
+        _ => return Err(tr!("recorder.error.sample_format").to_string()),
+    }.map_err(|e| format!("{} {}", tr!("recorder.error.create_stream"), e))?;
 
-    stream.play().map_err(|e| format!("Falha ao iniciar stream: {}", e))?;
+    stream.play().map_err(|e| format!("{} {}", tr!("recorder.error.play_stream"), e))?;
     Ok((stream, sample_rate))
 }

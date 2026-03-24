@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use serde::{Serialize, Deserialize};
+use egui_i18n::tr;
 
 use crate::audio::load_wav;
 use crate::oto::{parse_oto, save_oto};
@@ -76,7 +77,7 @@ impl CopaibaApp {
                                 p_name.to_string()
                             }
                         } else {
-                            "oto".to_string()
+                            tr!("file_ops.label.default_tab").to_string()
                         };
                         new_tab.name = name;
                         new_tab.entries = parsed.entries.clone();
@@ -124,7 +125,7 @@ impl CopaibaApp {
 
                 if !wavs.is_empty() {
                     let mut new_tab = TabState::default();
-                    new_tab.name = path.file_name().and_then(|s| s.to_str()).unwrap_or("Novo Set").to_string();
+                    new_tab.name = path.file_name().and_then(|s| s.to_str()).unwrap_or(&tr!("file_ops.label.new_set")).to_string();
                     new_tab.oto_dir = Some(path.clone());
                     new_tab.oto_path = Some(path.join("oto.ini"));
 
@@ -332,11 +333,11 @@ impl CopaibaApp {
                     self.select_multi(0, false, false);
                 }
                 self.load_character_metadata(self.current_tab);
-                self.ui.status = format!("{} aliases carregados.", self.cur().entries.len());
+                self.ui.status = format!("{} {}", self.cur().entries.len(), tr!("file_ops.status.aliases_loaded"));
                 self.save_prefs();
             }
             Err(e) => {
-                self.ui.status = format!("Erro ao abrir: {e}");
+                self.ui.status =  format!("{} {e}", tr!("file_ops.status.open_error"));
             }
         }
     }
@@ -358,10 +359,10 @@ impl CopaibaApp {
                     let tab = self.cur_mut();
                     tab.original_entries = tab.entries.clone();
                     tab.dirty = false;
-                    self.ui.status = "Salvo com sucesso.".to_string();
+                    self.ui.status = tr!("file_ops.status.saved_success").to_string();
                 }
                 Err(e) => {
-                    self.ui.status = format!("Erro ao salvar: {e}");
+                    self.ui.status = format!("{} {e}", tr!("file_ops.status.save_error"));
                 }
             }
         } else {

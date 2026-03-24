@@ -1,6 +1,7 @@
 use egui::RichText;
 use egui_plot::{Plot, Line, PlotPoints};
 use egui::Stroke;
+use egui_i18n::tr;
 use crate::plugins;
 use crate::spectrogram::ColormapKind;
 use super::state::CopaibaApp;
@@ -22,11 +23,12 @@ impl CopaibaApp {
 
     fn modal_exit_dialog(&mut self, ctx: &egui::Context) {
         if !self.ui.show_exit_dialog { return; }
-        egui::Window::new("Modificações Pendentes")
+        egui::Window::new(tr!("modal.exit.window.name"))
+            .id(egui::Id::new("exit_dialog"))
             .collapsible(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.label("Você possui alterações não salvas. Veja as diferenças abaixo:");
+                ui.label(tr!("modal.exit.label.unsaved_changes"));
                 ui.add_space(8.0);
                 egui::ScrollArea::vertical().max_height(350.0).show(ui, |ui| {
                     let mut has_diff = false;
@@ -46,19 +48,19 @@ impl CopaibaApp {
                             }
                         }
                     }
-                    if !has_diff { ui.label("Nenhuma alteração nos parâmetros (mas marcado como modificado)."); }
+                    if !has_diff { ui.label(tr!("modal.exit.label.unchanged_but_marked")); }
                 });
                 ui.add_space(16.0);
                 ui.horizontal(|ui| {
-                    if ui.button("Salvar e Sair").clicked() {
+                    if ui.button(tr!("btn.save_exit")).clicked() {
                         self.save_oto();
                         if !self.cur().dirty { ctx.send_viewport_cmd(egui::ViewportCommand::Close); }
                     }
-                    if ui.button("Sair sem Salvar").clicked() {
+                    if ui.button(tr!("btn.not_save_exit")).clicked() {
                         self.cur_mut().dirty = false;
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
-                    if ui.button("Cancelar").clicked() { self.ui.show_exit_dialog = false; }
+                    if ui.button(tr!("btn.cancel")).clicked() { self.ui.show_exit_dialog = false; }
                 });
             });
     }
@@ -66,13 +68,14 @@ impl CopaibaApp {
     fn modal_preset_editor(&mut self, ctx: &egui::Context) {
         if !self.ui.show_preset_editor { return; }
         let mut close = false;
-        egui::Window::new("Editar Presets")
+        egui::Window::new(tr!("modal.preset.window.name"))
+            .id(egui::Id::new("preset_editor"))
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
                 egui::Grid::new("preset_grid").striped(true).show(ui, |ui| {
-                    ui.heading("Atalho"); ui.heading("Nome"); ui.heading("Consonant");
-                    ui.heading("Cutoff"); ui.heading("Preutter"); ui.heading("Overlap");
+                    ui.heading(tr!("modal.preset.grid.shortcut")); ui.heading(tr!("modal.preset.grid.name")); ui.heading(tr!("modal.preset.grid.consonant"));
+                    ui.heading(tr!("modal.preset.grid.cutoff")); ui.heading(tr!("modal.preset.grid.preutter")); ui.heading(tr!("modal.preset.grid.overlap"));
                     ui.end_row();
                     for (i, preset) in self.presets.iter_mut().enumerate() {
                         ui.label(format!("Ctrl+{}", i + 1));
@@ -85,7 +88,7 @@ impl CopaibaApp {
                     }
                 });
                 ui.add_space(8.0);
-                if ui.button("Fechar").clicked() { close = true; }
+                if ui.button(tr!("btn.close")).clicked() { close = true; }
             });
         if close { self.ui.show_preset_editor = false; }
     }
@@ -93,30 +96,47 @@ impl CopaibaApp {
     fn modal_settings(&mut self, ctx: &egui::Context) {
         if !self.ui.show_settings { return; }
         let mut open = true;
-        egui::Window::new("⚙ Configurações")
+        egui::Window::new(format!("⚙ {}", tr!("modal.settings.window.name")))
+            .id(egui::Id::new("settings"))
             .open(&mut open)
             .default_size([400.0, 600.0])
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.heading("🎬 Visualização do Waveform");
-                    ui.checkbox(&mut self.visual.show_minimap, "Mostrar Minimapa (Visão Geral)");
-                    ui.checkbox(&mut self.visual.persistent_zoom, "Manter zoom ao trocar alias");
+                    ui.heading(format!("🌍 {}", tr!("modal.settings.general.heading")));
                     ui.horizontal(|ui| {
-                        ui.label("Cor do Waveform:");
+                        ui.label(tr!("modal.settings.general.label.language"));
+                        egui::ComboBox::from_id_salt("language_selector")
+                            .selected_text(&self.config.language)
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_value(&mut self.config.language, "en-US".to_string(), "en-US").clicked() {
+                                    egui_i18n::set_language("en-US");
+                                }
+                                if ui.selectable_value(&mut self.config.language, "pt-BR".to_string(), "pt-BR").clicked() {
+                                    egui_i18n::set_language("pt-BR");
+                                }
+                            });
+                    });
+                    ui.separator();
+
+                    ui.heading(format!("🎬 {}", tr!("modal.settings.waveform.heading")));
+                    ui.checkbox(&mut self.visual.show_minimap, tr!("modal.settings.waveform.ckb.show_minimap"));
+                    ui.checkbox(&mut self.visual.persistent_zoom, tr!("modal.settings.waveform.ckb.persistent_zoom"));
+                    ui.horizontal(|ui| {
+                        ui.label(tr!("modal.settings.waveform.label.color"));
                         if ui.color_edit_button_srgba(&mut self.visual.wave.top_color).changed() { self.clear_wave_cache(); }
-                        ui.label("Positivo");
+                        ui.label(tr!("modal.settings.waveform.label.positive"));
                         if ui.color_edit_button_srgba(&mut self.visual.wave.bot_color).changed() { self.clear_wave_cache(); }
-                        ui.label("Negativo");
+                        ui.label(tr!("modal.settings.waveform.label.negative"));
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Linha Spline:");
+                        ui.label(tr!("modal.settings.waveform.label.spline"));
                         if ui.color_edit_button_srgba(&mut self.visual.wave.line_color).changed() { self.clear_wave_cache(); }
                         ui.add(egui::Slider::new(&mut self.visual.wave.thickness, 0.5..=5.0).step_by(0.1));
                     });
                     ui.separator();
 
-                    ui.heading("🌐 Codificação");
-                    egui::ComboBox::from_label("Encoding de texto")
+                    ui.heading(format!("🌐 {}", tr!("modal.settings.encoding.heading")));
+                    egui::ComboBox::from_label(tr!("modal.settings.encoding.label"))
                         .selected_text(format!("{:?}", self.encoding))
                         .show_ui(ui, |ui| {
                             use crate::oto::OtoEncoding;
@@ -126,15 +146,15 @@ impl CopaibaApp {
                         });
                     ui.separator();
 
-                    ui.heading("🎨 Espectrograma");
-                    ui.checkbox(&mut self.visual.show_spectrogram, "Habilitar Espectrograma HD");
+                    ui.heading(format!("🎨 {}", tr!("modal.settings.spectrogram.heading")));
+                    ui.checkbox(&mut self.visual.show_spectrogram, tr!("modal.settings.spectrogram.ckb.hd"));
                     ui.add_space(4.0);
 
                     let mut fft_changed = false;
                     let mut render_changed = false;
 
                     ui.horizontal(|ui| {
-                        ui.label("FFT Size:");
+                        ui.label(tr!("modal.settings.spectrogram.label.fft_size"));
                         for &sz in &[512usize, 1024, 2048, 4096, 8192] {
                             if ui.selectable_label(self.visual.spec.fft_size == sz, sz.to_string()).clicked() {
                                 self.visual.spec.fft_size = sz; fft_changed = true;
@@ -142,7 +162,7 @@ impl CopaibaApp {
                         }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Hop Size:");
+                        ui.label(tr!("modal.settings.spectrogram.label.hop"));
                         for &sz in &[64usize, 128, 256, 512] {
                             if ui.selectable_label(self.visual.spec.hop_size == sz, sz.to_string()).clicked() {
                                 self.visual.spec.hop_size = sz; fft_changed = true;
@@ -150,23 +170,23 @@ impl CopaibaApp {
                         }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Freq min (Hz):");
+                        ui.label(tr!("modal.settings.spectrogram.label.freq_min"));
                         if ui.add(egui::DragValue::new(&mut self.visual.spec.min_freq).speed(5.0).range(1.0..=5000.0).suffix(" Hz")).changed() { render_changed = true; }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Freq máx (Hz):");
+                        ui.label(tr!("modal.settings.spectrogram.label.freq_max"));
                         if ui.add(egui::DragValue::new(&mut self.visual.spec.max_freq).speed(100.0).range(0.0..=24000.0).suffix(" Hz")).changed() { render_changed = true; }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Piso de ruído (dB):");
+                        ui.label(tr!("modal.settings.spectrogram.label.noise"));
                         if ui.add(egui::Slider::new(&mut self.visual.spec.min_db, -120.0_f32..=-20.0).suffix(" dB")).changed() { render_changed = true; }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Gama (contraste):");
+                        ui.label(tr!("modal.settings.spectrogram.label.gama"));
                         if ui.add(egui::Slider::new(&mut self.visual.spec.gamma, 0.1_f32..=1.5).step_by(0.05)).changed() { render_changed = true; }
                     });
                     ui.horizontal(|ui| {
-                        ui.label("Paleta:");
+                        ui.label(tr!("modal.settings.spectrofram.label.palette"));
                         for (kind, label) in &[
                             (ColormapKind::Fire, "🔥 Fire"),
                             (ColormapKind::Inferno, "🌋 Inferno"),
@@ -178,7 +198,7 @@ impl CopaibaApp {
                             }
                         }
                     });
-                    if ui.checkbox(&mut self.visual.spec.adaptive_norm, "Normalização Adaptativa").changed() { render_changed = true; }
+                    if ui.checkbox(&mut self.visual.spec.adaptive_norm, tr!("modal.settings.spectrogram.ckb.adaptative_norm")).changed() { render_changed = true; }
 
                     if fft_changed {
                         self.spec_data_cache.clear();
@@ -193,37 +213,38 @@ impl CopaibaApp {
                     }
 
                     ui.separator();
-                    if ui.button("Fechar").clicked() { self.ui.show_settings = false; }
+                    if ui.button(tr!("btn.close")).clicked() { self.save_prefs(); self.ui.show_settings = false; }
                 });
             });
-        if !open { self.ui.show_settings = false; }
+        if !open { self.save_prefs(); self.ui.show_settings = false; }
     }
 
     fn modal_help(&mut self, ctx: &egui::Context) {
         if !self.ui.show_help { return; }
         let mut open = true;
-        egui::Window::new("Cheatsheet de Atalhos")
+        egui::Window::new(tr!("modal.shortcuts.window.name"))
+            .id(egui::Id::new("help"))
             .open(&mut open)
             .show(ctx, |ui| {
                 egui::Grid::new("shorts").striped(true).show(ui, |ui| {
-                    ui.strong("Geral"); ui.label(""); ui.end_row();
-                    ui.label("Ctrl + O"); ui.label("Abrir oto.ini"); ui.end_row();
-                    ui.label("Ctrl + S"); ui.label("Salvar"); ui.end_row();
-                    ui.label("Ctrl + Z"); ui.label("Desfazer"); ui.end_row();
-                    ui.label("Ctrl + Y"); ui.label("Refazer"); ui.end_row();
-                    ui.label("Ctrl + ,"); ui.label("Configurações"); ui.end_row();
-                    ui.label("F1"); ui.label("Atalhos"); ui.end_row();
+                    ui.strong(tr!("modal.shortcuts.label.general")); ui.label(""); ui.end_row();
+                    ui.label("Ctrl + O"); ui.label(tr!("modal.shortcuts.label.open_oto")); ui.end_row();
+                    ui.label("Ctrl + S"); ui.label(tr!("modal.shortcuts.label.save")); ui.end_row();
+                    ui.label("Ctrl + Z"); ui.label(tr!("modal.shortcuts.label.undo")); ui.end_row();
+                    ui.label("Ctrl + Y"); ui.label(tr!("modal.shortcuts.label.redo")); ui.end_row();
+                    ui.label("Ctrl + ,"); ui.label(tr!("modal.shortcuts.label.config")); ui.end_row();
+                    ui.label("F1"); ui.label(tr!("modal.shortcuts.label.shortcuts")); ui.end_row();
 
-                    ui.strong("Tabela"); ui.label(""); ui.end_row();
-                    ui.label("Ctrl + A"); ui.label("Selecionar Tudo"); ui.end_row();
-                    ui.label("Ctrl + D"); ui.label("Deletar Seleção"); ui.end_row();
-                    ui.label("Ctrl + I"); ui.label("Duplicar Atual"); ui.end_row();
-                    ui.label("Ctrl + R"); ui.label("Renomear"); ui.end_row();
+                    ui.strong(tr!("modal.shortcuts.label.table")); ui.label(""); ui.end_row();
+                    ui.label("Ctrl + A"); ui.label(tr!("modal.shortcuts.label.select_all")); ui.end_row();
+                    ui.label("Ctrl + D"); ui.label(tr!("modal.shortcuts.label.del_selection")); ui.end_row();
+                    ui.label("Ctrl + I"); ui.label(tr!("modal.shortcuts.label.duplicate")); ui.end_row();
+                    ui.label("Ctrl + R"); ui.label(tr!("modal.shortcuts.label.rename")); ui.end_row();
 
-                    ui.strong("Audio"); ui.label(""); ui.end_row();
-                    ui.label("Espaço"); ui.label("Tocar Segmento"); ui.end_row();
-                    ui.label("Shift + Espaço"); ui.label("Tocar Áudio Completo"); ui.end_row();
-                    ui.label("Ctrl+Shift+Esp"); ui.label("Teste de Síntese"); ui.end_row();
+                    ui.strong(tr!("modal.shortcuts.label.audio")); ui.label(""); ui.end_row();
+                    ui.label("Espaço"); ui.label(tr!("modal.shortcuts.label.play_segment")); ui.end_row();
+                    ui.label("Shift + Espaço"); ui.label(tr!("modal.shortcuts.label.play_audio")); ui.end_row();
+                    ui.label("Ctrl+Shift+Esp"); ui.label(tr!("modal.shortcuts.label.synth_test")); ui.end_row();
                 });
             });
         if !open { self.ui.show_help = false; }
@@ -232,25 +253,26 @@ impl CopaibaApp {
     fn modal_batch_rename(&mut self, ctx: &egui::Context) {
         if !self.ui.show_batch_rename { return; }
         let mut open = true;
-        egui::Window::new("📝 Renomear em Massa")
+        egui::Window::new(format!("📝 {}", tr!("modal.batch_rename.window.name")))
+            .id(egui::Id::new("batch_rename"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.label("Modificará apenas os aliases visíveis no filtro da aba atual.");
+                ui.label(tr!("modal.batch_rename.label.info"));
                 ui.separator();
-                ui.label("Substituir Texto:");
+                ui.label(tr!("modal.batch_rename.label.subst"));
                 ui.horizontal(|ui| {
                     ui.text_edit_singleline(&mut self.rename_find);
                     ui.label("→");
                     ui.text_edit_singleline(&mut self.rename_replace);
                 });
                 ui.add_space(8.0);
-                ui.label("Fixo:");
-                ui.horizontal(|ui| { ui.label("Prefixo:"); ui.text_edit_singleline(&mut self.rename_prefix); });
-                ui.horizontal(|ui| { ui.label("Sufixo:"); ui.text_edit_singleline(&mut self.rename_suffix); });
+                ui.label(tr!("modal.batch_rename.label.set"));
+                ui.horizontal(|ui| { ui.label(tr!("modal.batch_rename.label.prefix")); ui.text_edit_singleline(&mut self.rename_prefix); });
+                ui.horizontal(|ui| { ui.label(tr!("modal.batch_rename.label.sufffix")); ui.text_edit_singleline(&mut self.rename_suffix); });
                 ui.add_space(8.0);
-                if ui.button("Executar Enxertia").clicked() {
+                if ui.button(tr!("btn.exe")).clicked() {
                     let filtered = self.cur().filtered.clone();
                     let find = self.rename_find.clone();
                     let repl = self.rename_replace.clone();
@@ -279,12 +301,13 @@ impl CopaibaApp {
     fn modal_batch_edit(&mut self, ctx: &egui::Context) {
         if !self.ui.show_batch_edit { return; }
         let mut open = true;
-        egui::Window::new("📊 Edição em Lote")
+        egui::Window::new(format!("📊 {}", tr!("modal.batch_edit.window.name")))
+            .id(egui::Id::new("batch_edit"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.label("Aplicar valores fixos a todos os aliases visíveis (Filtro).");
+                ui.label(tr!("modal.batch_edit.label.info"));
                 ui.separator();
                 let labels = ["Offset", "Preutterance", "Overlap", "Consonant", "Cutoff"];
                 for i in 0..5 {
@@ -295,7 +318,7 @@ impl CopaibaApp {
                         }
                     });
                 }
-                if ui.button("Aplicar").clicked() {
+                if ui.button(tr!("btn.apply")).clicked() {
                     let filtered = self.cur().filtered.clone();
                     let enabled = self.batch_edit_enabled;
                     let values = self.batch_edit_values;
@@ -321,22 +344,23 @@ impl CopaibaApp {
     fn modal_alias_sorter(&mut self, ctx: &egui::Context) {
         if !self.ui.show_alias_sorter { return; }
         let mut open = true;
-        egui::Window::new("↕ Ordenar Aliases")
+        egui::Window::new(format!("↕ {}", tr!("modal.org_alias.window.name")))
+            .id(egui::Id::new("alias_sorter"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.label("Organize as entradas da tabela.");
+                ui.label(tr!("modal.org_alias.label.info"));
                 ui.separator();
-                egui::ComboBox::from_label("Modo")
+                egui::ComboBox::from_label(tr!("modal.org_alias.label.mode"))
                     .selected_text(format!("{:?}", self.sort_settings.mode))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::Alpha, "Alfabética");
-                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::FileName, "Arquivo");
-                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::Offset, "Offset");
+                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::Alpha, tr!("modal.org_alias.label.alphabetic"));
+                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::FileName, tr!("modal.org_alias.label.file"));
+                        ui.selectable_value(&mut self.sort_settings.mode, plugins::SortMode::Offset, tr!("modal.org_alias.label.offset"));
                     });
-                ui.checkbox(&mut self.sort_settings.group_by_file, "Agrupar por arquivo");
-                if ui.button("Confirmar").clicked() {
+                ui.checkbox(&mut self.sort_settings.group_by_file, tr!("modal.org_alias.ckb.group_by_file"));
+                if ui.button(tr!("btn.apply")).clicked() {
                     let settings = self.sort_settings.clone();
                     self.save_undo_state();
                     let tab = self.cur_mut();
@@ -352,21 +376,22 @@ impl CopaibaApp {
     fn modal_consistency_checker(&mut self, ctx: &egui::Context) {
         if !self.ui.show_consistency_checker { return; }
         let mut open = true;
-        egui::Window::new("🔍 Verificador de Consistência")
+        egui::Window::new(format!("🔍 {}", tr!("modal.consistency_checker.window.name")))
+            .id(egui::Id::new("consistency_checker"))
             .open(&mut open)
             .default_size([700.0, 500.0])
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    if ui.button("🚀 Escanear Agora").clicked() {
+                    if ui.button(format!("🚀 {}", tr!("modal.consistency_checker.btn.scan"))).clicked() {
                         let tab = self.cur();
                         self.ui.consistency_issues = plugins::check_consistency(&tab.entries, tab.oto_dir.as_deref());
                     }
-                    ui.label(format!("Problemas encontrados: {}", self.ui.consistency_issues.len()));
+                    ui.label(format!("{} {}", tr!("modal.consistency_checker.label.issues"), self.ui.consistency_issues.len()));
                 });
                 ui.separator();
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     egui::Grid::new("consistency_grid").striped(true).show(ui, |ui| {
-                        ui.label("Linha"); ui.label("Alias"); ui.label("Mensagem"); ui.end_row();
+                        ui.label(tr!("modal.consistency_checker.label.line")); ui.label(tr!("modal.consistency_checker.label.alias")); ui.label(tr!("modal.consistency_checker.label.message")); ui.end_row();
                         let mut jump_to = None;
                         for issue in &self.ui.consistency_issues {
                             ui.label((issue.row + 1).to_string());
@@ -384,32 +409,33 @@ impl CopaibaApp {
     fn modal_duplicate_detector(&mut self, ctx: &egui::Context) {
         let mut show_dups = self.ui.show_duplicate_detector;
         if show_dups {
-            egui::Window::new("✂ Detector de Duplicatas")
+            egui::Window::new(format!("✂ {}", tr!("modal.duplicate_detector.window.name")))
+                .id(egui::Id::new("duplicate_detector"))
                 .open(&mut show_dups)
                 .default_size([700.0, 500.0])
                 .show(ctx, |ui| {
-                    ui.label("Encontra entradas que definem o mesmo fonema ou que são idênticas.");
+                    ui.label(tr!("modal.duplicate_detector.label.info"));
                     ui.separator();
-                    if ui.button("🔍 Escanear").clicked() {
+                    if ui.button(format!("🔍 {}", tr!("modal.duplicate_detector.btn.scan"))).clicked() {
                         let tab = self.cur();
                         self.ui.duplicate_results = plugins::detect_duplicates(&tab.entries, true, true, true, false);
                     }
                     ui.add_space(8.0);
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         egui::Grid::new("dup_grid").striped(true).show(ui, |ui| {
-                            ui.label("Tipo"); ui.label("Alias A"); ui.label("Alias B"); ui.label("Ação"); ui.end_row();
+                            ui.label(tr!("modal.duplicate_detector.label.type")); ui.label(tr!("modal.duplicate_detector.label.alias_a")); ui.label(tr!("modal.duplicate_detector.label.alias_b")); ui.label(tr!("modal.duplicate_detector.label.action")); ui.end_row();
                             let mut delete_row = None;
                             let mut jump_to = None;
                             for dup in &self.ui.duplicate_results {
                                 ui.label(match dup.match_type.as_str() {
-                                    "exact" => "Exata", "case" => "Case", "functional" => "Funcional", _ => "Similar",
+                                    "exact" => tr!("modal.duplicate_detector.label.exact"), "case" => tr!("modal.duplicate_detector.label.case"), "functional" => tr!("modal.duplicate_detector.label.functional"), _ => tr!("modal.duplicate_detector.label.simmilar"),
                                 });
                                 ui.label(RichText::new(&dup.alias1).strong());
                                 ui.label(RichText::new(&dup.alias2).strong());
                                 ui.horizontal(|ui| {
-                                    if ui.button("Ir para #1").clicked() { jump_to = Some(dup.row1); }
-                                    if ui.button("Ir para #2").clicked() { jump_to = Some(dup.row2); }
-                                    if ui.button("Del #2").clicked() { delete_row = Some(dup.row2); }
+                                    if ui.button(tr!("modal.duplicate_detector.btn.goto_1")).clicked() { jump_to = Some(dup.row1); }
+                                    if ui.button(tr!("modal.duplicate_detector.btn.goto_2")).clicked() { jump_to = Some(dup.row2); }
+                                    if ui.button(tr!("modal.duplicate_detector.btn.del_2")).clicked() { delete_row = Some(dup.row2); }
                                 });
                                 ui.end_row();
                             }
@@ -432,14 +458,15 @@ impl CopaibaApp {
     fn modal_pitch_analyzer(&mut self, ctx: &egui::Context) {
         let mut show_pitch = self.ui.show_pitch_analyzer;
         if show_pitch {
-            egui::Window::new("🎵 Análise de Pitch")
+            egui::Window::new(format!("🎵 {}", tr!("modal.pitch_analyzer.window.name")))
+                .id(egui::Id::new("pitch_analyzer"))
                 .open(&mut show_pitch)
                 .default_size([700.0, 450.0])
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
-                        ui.label("Janela (ms):");
+                        ui.label(tr!("modal.pitch_analyzer.label.window"));
                         ui.add(egui::Slider::new(&mut self.pitch_window_ms, 5.0..=40.0));
-                        if ui.button("🎵 Analisar").clicked() {
+                        if ui.button(format!("🎵 {}", tr!("modal.pitch_analyzer.btn.analyze"))).clicked() {
                             let tab = self.cur();
                             if let Some(&idx) = tab.filtered.get(tab.selected) {
                                 let entry = &tab.entries[idx];
@@ -461,7 +488,7 @@ impl CopaibaApp {
                             let valid: Vec<f64> = self.pitch_values.iter().filter(|&&v| v > 0.0).copied().collect();
                             if !valid.is_empty() {
                                 let avg = valid.iter().sum::<f64>() / valid.len() as f64;
-                                ui.label(RichText::new(format!("Pitch Médio: {:.1} Hz ({})", avg, plugins::freq_to_note(avg))).color(egui::Color32::from_rgb(100, 255, 100)).strong());
+                                ui.label(RichText::new(format!("{} {:.1} Hz ({})", tr!("modal.pitch_analyzer.label.avg"), avg, plugins::freq_to_note(avg))).color(egui::Color32::from_rgb(100, 255, 100)).strong());
                             }
                         }
                     });

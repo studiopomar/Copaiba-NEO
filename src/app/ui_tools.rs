@@ -1,3 +1,4 @@
+use egui_i18n::tr;
 use super::state::CopaibaApp;
 
 impl CopaibaApp {
@@ -8,7 +9,7 @@ impl CopaibaApp {
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().id_salt("tools_scroll").show(ui, |ui| {
                     ui.add_space(8.0);
-                    ui.heading("🛠️ Presets");
+                    ui.heading(format!("🛠️ {}", tr!("tools.label.presets")));
                     ui.separator();
 
                     let display_presets = self.presets.clone();
@@ -34,33 +35,33 @@ impl CopaibaApp {
                     }
 
                     ui.add_space(4.0);
-                    if ui.button("Editar Presets...").clicked() { self.ui.show_preset_editor = true; }
+                    if ui.button(tr!("tools.btn.edit_presets")).clicked() { self.ui.show_preset_editor = true; }
 
                     ui.add_space(20.0);
-                    ui.heading("🕹️ Modos de Edição");
+                    ui.heading(format!("🕹️ {}", tr!("tools.label.edit_modes")));
                     ui.separator();
                     {
                         let tab = self.cur_mut();
-                        ui.checkbox(&mut tab.wave_view.srp, "SRP (Shift+1)");
-                        ui.label(egui::RichText::new("Move tudo relativo à Preutt").small());
+                        ui.checkbox(&mut tab.wave_view.srp, format!("{} (Shift+1)", tr!("tools.label.srp")));
+                        ui.label(egui::RichText::new(tr!("tools.label.srp_desc")).small());
                         ui.add_space(8.0);
-                        ui.checkbox(&mut tab.wave_view.srna, "SRnA (Shift+2)");
-                        ui.label(egui::RichText::new("Fixa marcadores ao mover Offset").small());
+                        ui.checkbox(&mut tab.wave_view.srna, format!("{} (Shift+2)", tr!("tools.label.srna")));
+                        ui.label(egui::RichText::new(tr!("tools.label.srna_desc")).small());
                         ui.add_space(8.0);
-                        ui.checkbox(&mut tab.wave_view.snap_to_peaks, "Auto-oto [WIP/OFF]");
-                        ui.label(egui::RichText::new("Atrai marcadores para picos").small());
+                        ui.checkbox(&mut tab.wave_view.snap_to_peaks, tr!("tools.label.auto_oto"));
+                        ui.label(egui::RichText::new(tr!("tools.label.auto_oto_desc")).small());
                     }
                     ui.add_space(8.0);
-                    ui.checkbox(&mut self.visual.persistent_zoom, "Zoom Persistente");
-                    ui.label(egui::RichText::new("Não reseta zoom ao trocar alias").small());
+                    ui.checkbox(&mut self.visual.persistent_zoom, tr!("tools.label.zoom"));
+                    ui.label(egui::RichText::new(tr!("tools.label.zoom_desc")).small());
 
                     ui.add_space(20.0);
-                    ui.heading("📊 Status");
+                    ui.heading(format!("📊 {}", tr!("tools.label.status")));
                     ui.separator();
                     {
                         let tab = self.cur();
-                        ui.label(format!("Aliases: {}", tab.entries.len()));
-                        ui.label(format!("Filtrados: {}", tab.filtered.len()));
+                        ui.label(format!("{} {}", tr!("tools.label.aliases"), tab.entries.len()));
+                        ui.label(format!("{} {}", tr!("tools.label.filtered"), tab.filtered.len()));
                     }
                 });
             });

@@ -1,4 +1,5 @@
 use egui::{Color32, RichText, Vec2, ComboBox};
+use egui_i18n::tr;
 use std::path::PathBuf;
 use super::state::CopaibaApp;
 
@@ -100,12 +101,12 @@ impl CopaibaApp {
                                 }
                             });
                         });
-                    ui.label("Tom:");
+                    ui.label(tr!("header.pitch.label"));
 
                     ui.separator();
 
                     // Resampler Selection
-                    if ui.button(RichText::new("⚙ Resampler").strong()).clicked() {
+                    if ui.button(RichText::new(format!("⚙ {}", tr!("header.resampler.select"))).strong()).clicked() {
                         if let Some(path) = rfd::FileDialog::new().pick_file() {
                             self.config.resampler_path = Some(path);
                         }
@@ -113,20 +114,20 @@ impl CopaibaApp {
                     if let Some(res) = &self.config.resampler_path {
                         ui.label(RichText::new(res.file_name().unwrap_or_default().to_string_lossy()).size(10.0).color(ui.visuals().weak_text_color()));
                     } else {
-                        ui.label(RichText::new("Nenhum").size(10.0).color(Color32::from_rgb(243, 139, 168)));
+                        ui.label(RichText::new(tr!("header.resampler.none")).size(10.0).color(Color32::from_rgb(243, 139, 168)));
                     }
 
                     ui.separator();
                     let has_resampler = self.config.resampler_path.is_some();
-                    let mut btn = ui.button(RichText::new("🧪 Testar alias").strong());
+                    let mut btn = ui.button(RichText::new(format!("🧪 {}", tr!("header.resampler.test"))).strong());
                     if !has_resampler {
-                        btn = btn.on_hover_text("⚠️ Configure um resampler antes de testar!");
+                        btn = btn.on_hover_text(tr!("header.resampler.hover"));
                     }
                     if btn.clicked() {
                         if has_resampler {
                             self.resample_current();
                         } else {
-                            self.ui.status = "⚠️ Configure um resampler primeiro!".to_string();
+                            self.ui.status = tr!("header.resampler.status").to_string();
                         }
                     }
                 });

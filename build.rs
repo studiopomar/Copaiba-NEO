@@ -1,7 +1,10 @@
 fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
         let mut res = winres::WindowsResource::new();
-        res.set_icon("icon.ico");
-        res.compile().unwrap();
+        // Only set icon if it exists
+        if std::path::Path::new("icon.ico").exists() {
+            res.set_icon("icon.ico");
+            res.compile().unwrap();
+        }
     }
 }

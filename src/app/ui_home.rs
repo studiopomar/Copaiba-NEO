@@ -1,4 +1,5 @@
 use egui::{Color32, RichText, Vec2, Frame, Margin, CornerRadius};
+use egui_i18n::tr;
 use super::state::CopaibaApp;
 
 impl CopaibaApp {
@@ -15,13 +16,13 @@ impl CopaibaApp {
                         ui.set_max_width(800.0);
                         
                         ui.add_space(60.0);
-                        ui.label(RichText::new("Copaiba NEO").size(48.0).strong().color(Color32::from_rgb(140, 100, 200)));
-                        ui.label(RichText::new("Editor de oto.ini").size(16.0).color(Color32::GRAY));
+                        ui.label(RichText::new(tr!("home.title")).size(48.0).strong().color(Color32::from_rgb(140, 100, 200)));
+                        ui.label(RichText::new(tr!("home.subtitle")).size(16.0).color(Color32::GRAY));
                         ui.add_space(40.0);
                         
                         ui.horizontal(|ui| {
                             ui.add_space(ui.available_width() / 2.0 - 150.0);
-                            if ui.add(egui::Button::new(RichText::new("📁 Abrir Voicebank").size(18.0)).min_size(Vec2::new(300.0, 50.0))).clicked() {
+                            if ui.add(egui::Button::new(RichText::new(format!("📁 {}",tr!("home.btn.open_voicebank"))).size(18.0)).min_size(Vec2::new(300.0, 50.0))).clicked() {
                                 self.open_voicebank_dir();
                             }
                         });
@@ -29,7 +30,7 @@ impl CopaibaApp {
                         ui.add_space(40.0);
                         
                         if !self.config.recent_voicebanks.is_empty() {
-                            ui.label(RichText::new("Recentes").size(24.0).strong());
+                            ui.label(RichText::new(tr!("home.label.recent")).size(24.0).strong());
                             ui.add_space(20.0);
                             
                             ui.vertical(|ui| {
@@ -90,7 +91,7 @@ impl CopaibaApp {
                                             });
                                             
                                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                                if ui.button("Abrir").clicked() || resp.clicked() {
+                                                if ui.button(tr!("home.btn.open")).clicked() || resp.clicked() {
                                                     self.load_oto(recent.path.clone());
                                                     self.ui.show_home = false;
                                                 }
@@ -102,7 +103,7 @@ impl CopaibaApp {
                             });
                         } else {
                             ui.add_space(20.0);
-                            ui.label(RichText::new("Nenhum voicebank recente.").color(Color32::GRAY));
+                            ui.label(RichText::new(tr!("home.label.no_recent")).color(Color32::GRAY));
                         }
                         
                         ui.add_space(60.0);

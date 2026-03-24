@@ -13,6 +13,12 @@ use egui::{Color32, Stroke, Vec2};
 use app::CopaibaApp;
 
 fn main() -> eframe::Result {
+    let pt_br = include_str!("assets/pt-BR.egl");
+    let en_us = include_str!("assets/en-US.egl");
+    egui_i18n::load_translations_from_text("pt-BR", pt_br).unwrap();
+    egui_i18n::load_translations_from_text("en-US", en_us).unwrap();
+    egui_i18n::set_language("pt-BR");
+    egui_i18n::set_fallback("pt-BR");
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Copaiba NEO")
@@ -29,6 +35,7 @@ fn main() -> eframe::Result {
             setup_fonts(&cc.egui_ctx);
             let mut app = CopaibaApp::default();
             app.load_prefs();
+            egui_i18n::set_language(&app.config.language);
             Ok(Box::new(app))
         }),
     )
