@@ -22,11 +22,16 @@ jobs:
       run: |
         mkdir -p AppDir/usr/bin
         cp target/release/copaiba_neo AppDir/usr/bin/
+        
+        # Cria um ícone SVG vazio/invisível para enganar o empacotador do Linux
+        echo '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="transparent"/></svg>' > AppDir/icon.svg
+        
         cat > AppDir/copaiba_neo.desktop <<EOF
         [Desktop Entry]
         Type=Application
         Name=Copaiba NEO
         Exec=copaiba_neo
+        Icon=icon
         Categories=AudioVideo;Audio;
         EOF
     - name: Generate AppImage
@@ -34,7 +39,6 @@ jobs:
         wget -O linuxdeploy-x86_64.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
         chmod +x linuxdeploy-x86_64.AppImage
         export ARCH=x86_64
-        # Disable AppImage runtime checks inside Docker/CI
         export APPIMAGE_EXTRACT_AND_RUN=1
         ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
     - name: Upload Linux Binary
@@ -52,8 +56,16 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+    
+    # Cria um .ico transparente para satisfazer o arquivo build.rs do seu projeto
+    - name: Create Dummy Icon for build.rs
+      run: |
+        choco install imagemagick
+        magick -size 256x256 xc:transparent icon.ico
+        
     - name: Build
       run: cargo build --release
+      
     - name: Upload Windows Binary
       uses: actions/upload-artifact@v4
       with:
