@@ -13,6 +13,10 @@ use egui::{Color32, Stroke, Vec2};
 use app::CopaibaApp;
 
 fn main() -> eframe::Result {
+    // Load translations at compile time
+    let _ = egui_i18n::load_translations_from_text("en-US", include_str!("assets/en-US.egl"));
+    let _ = egui_i18n::load_translations_from_text("pt-BR", include_str!("assets/pt-BR.egl"));
+
     println!("Starting Copaiba NEO...");
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -32,6 +36,9 @@ fn main() -> eframe::Result {
             let mut app = CopaibaApp::default();
             println!("Loading preferences...");
             app.load_prefs();
+            // Set the language from config
+            let lang = app.config.language.clone();
+            app.set_language(&lang);
             println!("App started!");
             Ok(Box::new(app))
         }),
@@ -80,7 +87,7 @@ impl eframe::App for CopaibaApp {
         if ctx.input(|i| i.viewport().close_requested()) {
             if self.cur().dirty {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-                self.show_exit_dialog = true;
+                self.ui.show_exit_dialog = true;
             }
         }
 
@@ -101,7 +108,7 @@ impl eframe::App for CopaibaApp {
         self.show_modals(ctx);
 
         // Repaint rate
-        if self.playback_start.is_some() {
+        if self.audio.playback_start.is_some() {
             ctx.request_repaint_after(std::time::Duration::from_millis(32));
         } else {
             ctx.request_repaint_after(std::time::Duration::from_millis(500));
