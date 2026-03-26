@@ -204,6 +204,13 @@ impl CopaibaApp {
 
                 ui.menu_button(tr!("menu.plugins"), |ui| {
                     if ui
+                        .button(format!("🔬 {}", tr!("menu.plugins.auto_oto")))
+                        .clicked()
+                    {
+                        self.ui.show_auto_oto = true;
+                        ui.close_menu();
+                    }
+                    if ui
                         .button(format!("🔍 {}", tr!("menu.plugins.consistency_checker")))
                         .clicked()
                     {

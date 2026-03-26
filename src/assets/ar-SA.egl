@@ -34,10 +34,11 @@ menu.plugins.duplicate_detector = كشف التكرار
 menu.plugins.pitch_analyzer = محلل النغمات
 menu.plugins.alias_sorter = ترتيب الأسماء المستعارة...
 menu.plugins.batch_rename = إعادة تسمية جماعية
-menu.plugins.batch_edit = تعديل جماعي
-menu.plugins.alias_conv = محول الأسماء المستعارة
+menu.plugins.batch_edit = التحرير الجماعي
+menu.plugins.alias_conv = محول الأسماء المستعارة (روماجي-هيراغانا)
+menu.plugins.auto_oto = أداة Auto-Oto
 # Menu - Help
-menu.help = مساعدة
+menu.help = تعليمات
 menu.help.shortcuts = إختصارات لوحة المفاتيح
 # Menu - Others
 menu.others.re_record = إعادة تسجيل الصوت
@@ -128,6 +129,14 @@ modal.batch_edit.mode.absolute = قيمة ثابتة
 modal.batch_edit.mode.relative = تعديل نسبي (±)
 # Modal - Alias Converter
 modal.alias_conv.window.name = محول الأسماء المستعارة
+modal.alias_conv.btn.apply_all = تطبيق على الكل
+# Modal - Auto-Oto
+modal.auto_oto.window.name = مولد Auto-Oto الأوتوماتيكي
+modal.auto_oto.label.desc = يحلل طاقة الصوت لاقتراح إعدادات الإزاحة والقطع.
+modal.auto_oto.label.noise = حد الضوضاء:
+modal.auto_oto.label.margin = الهامش الأدنى:
+modal.auto_oto.label.min_silence = الصمت النهائي:
+modal.auto_oto.btn.apply_selected = تطبيق على المحدد
 modal.alias_conv.label.info = التحويل بين هيراغانا (اليابانية) ورومادي (الغربية).
 modal.alias_conv.mode.to_romaji = إلى رومادي
 modal.alias_conv.mode.to_hiragana = إلى هيراغانا

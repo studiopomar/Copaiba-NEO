@@ -217,6 +217,7 @@ pub struct UiState {
     pub show_duplicate_detector: bool,
     pub show_pitch_analyzer: bool,
     pub show_alias_converter: bool,
+    pub show_auto_oto: bool,
     
     // Results
     pub consistency_issues: Vec<plugins::ValidationIssue>,
@@ -254,6 +255,7 @@ impl Default for UiState {
             show_alias_converter: false,
             show_duplicate_detector: false,
             show_pitch_analyzer: false,
+            show_auto_oto: false,
             consistency_issues: Vec::new(),
             duplicate_results: Vec::new(),
             show_recorder: false,
@@ -351,6 +353,9 @@ pub struct CopaibaApp {
 
     pub alias_conv_to_hiragana: bool,
 
+    // Auto-Oto State
+    pub auto_oto_settings: crate::app::auto_oto::AutoOtoSettings,
+
     // Logic
     pub session_start_time: f64,
     #[allow(dead_code)]
@@ -396,11 +401,13 @@ impl Default for CopaibaApp {
             batch_edit_enabled: [false; 5],
             batch_edit_values: [0.0; 5],
             batch_edit_is_relative: false,
-            alias_conv_to_hiragana: false,
+            alias_conv_to_hiragana: true,
 
-            project_path: None,
+            auto_oto_settings: crate::app::auto_oto::AutoOtoSettings::default(),
+
             session_start_time: 0.0,
             last_auto_save_time: 0.0,
+            project_path: None,
         }
     }
 }

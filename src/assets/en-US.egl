@@ -66,8 +66,9 @@ menu.plugins.duplicate_detector = Duplicate Detector
 menu.plugins.pitch_analyzer = Pitch Analyzer
 menu.plugins.alias_sorter = Sort Aliases...
 menu.plugins.batch_rename = Batch Rename
-menu.plugins.batch_edit = Batch Edit
-menu.plugins.alias_conv = Alias Converter
+menu.plugins.batch_edit = Batch Editor
+menu.plugins.alias_conv = Romaji-Hiragana Converter
+menu.plugins.auto_oto = Auto-Oto Tool
 # Menu - Help
 menu.help = Help
 menu.help.shortcuts = Keyboard Shortcuts
@@ -159,6 +160,14 @@ modal.batch_edit.label.info = Apply values to visible (or selected) aliases.
 modal.batch_edit.mode.absolute = Absolute Value
 modal.batch_edit.mode.relative = Relative Adjustment (±)
 # Modal - Alias Converter
+modal.alias_conv.btn.apply_all = Apply to All
+# Modal - Auto-Oto
+modal.auto_oto.window.name = Auto-Oto Generator
+modal.auto_oto.label.desc = Analyzes audio energy to suggest Offset, Cutoff, and Preutterance.
+modal.auto_oto.label.noise = Noise Floor:
+modal.auto_oto.label.margin = Minimum Margin:
+modal.auto_oto.label.min_silence = Trailing Silence:
+modal.auto_oto.btn.apply_selected = Apply to Selection
 modal.alias_conv.window.name = Alias Converter
 modal.alias_conv.label.info = Convert between Hiragana (Japanese) and Romaji (Western).
 modal.alias_conv.mode.to_romaji = To Romaji

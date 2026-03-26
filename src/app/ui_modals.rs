@@ -23,6 +23,7 @@ impl CopaibaApp {
         self.modal_recorder(ctx);
         self.modal_readme(ctx);
         self.modal_license(ctx);
+        self.modal_auto_oto(ctx);
     }
 
     fn modal_exit_dialog(&mut self, ctx: &egui::Context) {
@@ -719,5 +720,42 @@ impl CopaibaApp {
                 });
             });
         self.ui.show_license = open;
+    }
+
+    fn modal_auto_oto(&mut self, ctx: &egui::Context) {
+        if !self.ui.show_auto_oto { return; }
+        let mut open = true;
+        
+        egui::Window::new(format!("🔬 {}", tr!("modal.auto_oto.window.name")))
+            .id(egui::Id::new("auto_oto_modal"))
+            .open(&mut open)
+            .default_size([400.0, 300.0])
+            .show(ctx, |ui| {
+                ui.label(tr!("modal.auto_oto.label.desc"));
+                ui.add_space(8.0);
+                
+                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
+                    ui.label(tr!("modal.auto_oto.label.noise"));
+                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.noise_floor_db, -60.0_f32..=-10.0).suffix(" dB"));
+                });
+                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
+                    ui.label(tr!("modal.auto_oto.label.margin"));
+                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.margin_ms, 0.0..=50.0).suffix(" ms"));
+                });
+                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
+                    ui.label(tr!("modal.auto_oto.label.min_silence"));
+                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.min_silence_ms, 0.0..=200.0).suffix(" ms"));
+                });
+                
+                ui.add_space(16.0);
+                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
+                    if ui.button(tr!("modal.auto_oto.btn.apply_selected")).clicked() {
+                        self.apply_auto_oto_to_selection();
+                        self.ui.show_auto_oto = false;
+                    }
+                });
+            });
+            
+        self.ui.show_auto_oto = open;
     }
 }

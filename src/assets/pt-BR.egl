@@ -67,7 +67,8 @@ menu.plugins.pitch_analyzer = Análise de Pitch
 menu.plugins.alias_sorter = Ordenar Aliases...
 menu.plugins.batch_rename = Renomear em Massa
 menu.plugins.batch_edit = Edição em Lote
-menu.plugins.alias_conv = Conversor de Alias
+menu.plugins.alias_conv = Conversor de Alias Romaji-Hiragana
+menu.plugins.auto_oto = Ferramenta de Auto-Oto
 # Menu - Help
 menu.help = Ajuda
 menu.help.shortcuts = Atalhos de Teclado
@@ -159,6 +160,14 @@ modal.batch_edit.label.info = Aplicar valores aos aliases visíveis (ou selecion
 modal.batch_edit.mode.absolute = Valor Fixo
 modal.batch_edit.mode.relative = Ajuste Relativo (±)
 # Modal - Alias Converter
+modal.alias_conv.btn.apply_all = Aplicar em Tudo
+# Modal - Auto-Oto
+modal.auto_oto.window.name = Gerador Auto-Oto
+modal.auto_oto.label.desc = Analisa a energia do áudio para sugerir Offset, Cutoff e Preutterance.
+modal.auto_oto.label.noise = Piso de Ruído:
+modal.auto_oto.label.margin = Margem Mínima:
+modal.auto_oto.label.min_silence = Silêncio Final (Corte):
+modal.auto_oto.btn.apply_selected = Aplicar na Seleção
 modal.alias_conv.window.name = Conversor de Alias
 modal.alias_conv.label.info = Converte entre Hiragana (Japonês) e Romaji (Ocidental).
 modal.alias_conv.mode.to_romaji = Para Romaji
