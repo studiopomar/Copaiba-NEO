@@ -31,9 +31,17 @@ pitch-detection = "0.3"
 [build-dependencies]
 winres = "0.1"
 
+[package.metadata.android]
+apk_label = "Copaiba NEO"
+apk_name = "copaiba_neo"
+package = "com.studiopomar.copaibaneo"
+assets = "assets"
+
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = true
+codegen-units = 1
+panic = "abort"
 strip = true
 
 [profile.dev]

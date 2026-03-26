@@ -1,0 +1,135 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libx11-dev libxcb1-dev libxcursor-dev libxrandr-dev libxi-dev libasound2-dev libvulkan-dev pkg-config
+    - name: Build
+      run: cargo build --release
+    - name: Prepare AppImage metadata
+      run: |
+        mkdir -p AppDir/usr/bin
+        cp target/release/copaiba_neo AppDir/usr/bin/
+        
+        # Copia o ícone do software
+        cp favicon_mori.png AppDir/favicon_mori.png
+        
+        cat > AppDir/copaiba_neo.desktop <<EOF
+        [Desktop Entry]
+        Type=Application
+        Name=Copaiba NEO
+        Exec=copaiba_neo
+        Icon=favicon_mori
+        Categories=AudioVideo;Audio;
+        EOF
+    - name: Generate AppImage
+      run: |
+        wget -O linuxdeploy-x86_64.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+        export ARCH=x86_64
+        export APPIMAGE_EXTRACT_AND_RUN=1
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+    - name: Upload Linux Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-linux-x64
+        path: target/release/copaiba_neo
+    - name: Upload AppImage
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-appimage
+        path: "*.AppImage"
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Create Icon for build.rs
+      run: |
+        choco install imagemagick
+        magick favicon_mori.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+    - name: Build
+      run: cargo build --release
+    - name: Upload Windows Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-windows-x64
+        path: target/release/copaiba_neo.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --release
+    - name: Upload macOS Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-macos-universal
+        # O GitHub Actions no macos-latest (M1/M14) gera binários arm64 por padrão hoje em dia
+        path: target/release/copaiba_neo
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y libclang-dev
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android, armv7-linux-androideabi
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26b
+    - name: Install cargo-apk
+      run: cargo install cargo-apk
+    - name: Build APK
+      env:
+        ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: cargo apk build --release
+    - name: Upload Android APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-android-apk
+        path: target/**/release/apk/*.apk
+
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Rust for WASM
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+    - name: Install Trunk
+      # Usando Trunk, que é o padrão da indústria para empacotar apps Rust (como Egui/Yew) para web
+      uses: jetli/trunk-action@v0.5.0
+      with:
+        version: 'latest'
+    - name: Build WASM App
+      run: trunk build --release
+    - name: Upload Web Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-web
+        path: dist/
