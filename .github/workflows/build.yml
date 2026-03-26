@@ -56,18 +56,80 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    
-    # Cria um .ico transparente para satisfazer o arquivo build.rs do seu projeto
     - name: Create Dummy Icon for build.rs
       run: |
         choco install imagemagick
         magick -size 256x256 xc:transparent icon.ico
-        
     - name: Build
       run: cargo build --release
-      
     - name: Upload Windows Binary
       uses: actions/upload-artifact@v4
       with:
         name: copaiba_neo-windows-x64
         path: target/release/copaiba_neo.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --release
+    - name: Upload macOS Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-macos-universal
+        # O GitHub Actions no macos-latest (M1/M14) gera binários arm64 por padrão hoje em dia
+        path: target/release/copaiba_neo
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y libclang-dev
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android, armv7-linux-androideabi
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r26b
+    - name: Install cargo-apk
+      run: cargo install cargo-apk
+    - name: Build APK
+      env:
+        ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: cargo apk build --release
+    - name: Upload Android APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-android-apk
+        path: target/**/release/apk/*.apk
+
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Rust for WASM
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: wasm32-unknown-unknown
+    - name: Install Trunk
+      # Usando Trunk, que é o padrão da indústria para empacotar apps Rust (como Egui/Yew) para web
+      uses: jetli/trunk-action@v0.5.0
+      with:
+        version: 'latest'
+    - name: Build WASM App
+      run: trunk build --release
+    - name: Upload Web Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: copaiba_neo-web
+        path: dist/
