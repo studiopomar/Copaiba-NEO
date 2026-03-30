@@ -131,7 +131,13 @@ impl CopaibaApp {
             {
                 let tab = self.cur_mut();
                 if prev_fname.as_deref() != Some(fname.as_str()) {
-                    tab.wave_view.spec_cache = crate::waveform::SpecCache::default();
+                    // WAV file changed: clear BOTH caches so textures are
+                    // unconditionally rebuilt next frame (cache.texture.is_none()
+                    // always triggers needs_update regardless of is_animating or
+                    // data_ptr comparison).
+                    tab.wave_view.spec_cache  = crate::waveform::SpecCache::default();
+                    tab.wave_view.wave_cache  = crate::waveform::WaveCache::default();
+                    tab.wave_view.minimap_cache = crate::waveform::MinimapCache::default();
                     new_wav = true;
                 }
             }
@@ -139,9 +145,10 @@ impl CopaibaApp {
             let wav_duration = self.wav_cache.get(&full_path_key).map(|w| w.duration_ms);
             if let Some(dur) = wav_duration {
                 let persistent = self.visual.persistent_zoom;
+                let persistent_y = self.visual.persistent_y_zoom;
                 let tab = self.cur_mut();
                 if new_wav && !persistent {
-                    tab.wave_view.reset_to(dur);
+                    tab.wave_view.reset_to(dur, persistent_y);
                 }
                 
                 // Centering logic (Request 7 fix for cache hits)

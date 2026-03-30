@@ -15,6 +15,8 @@ menu.edit.delete = حذف
 # Menu - View
 menu.view = عرض
 menu.view.home = الشاشة الرئيسية
+menu.view.normalize = تطبيع مرئي للموجة
+menu.view.persistent_y_zoom = احتفظ بالتكبير الرأسي (ALT+Scroll) عبر الأسماء المستعارة
 # Menu - Playback
 menu.play = تشغيل
 menu.play.audio = تشغيل الملف الصوتي

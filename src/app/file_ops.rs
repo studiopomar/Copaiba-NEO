@@ -538,8 +538,17 @@ impl CopaibaApp {
                     self.wav_cache.insert(full_path_key, wav_with_spec.wav);
 
                     let persistent = self.visual.persistent_zoom;
+                    let persistent_y = self.visual.persistent_y_zoom;
+                    let tab = self.cur_mut();
+                    // New WAV loaded: clear all visual caches unconditionally so
+                    // the next frame rebuilds textures even if data_ptr happens to
+                    // match (e.g. same Arc address recycled in heap) or if
+                    // is_animating is true.
+                    tab.wave_view.wave_cache    = crate::waveform::WaveCache::default();
+                    tab.wave_view.spec_cache    = crate::waveform::SpecCache::default();
+                    tab.wave_view.minimap_cache = crate::waveform::MinimapCache::default();
                     if !persistent {
-                        self.cur_mut().wave_view.reset_to(dur);
+                        tab.wave_view.reset_to(dur, persistent_y);
                     }
                     
                     // Centering logic (Request 7 fix)

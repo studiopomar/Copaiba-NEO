@@ -9,6 +9,7 @@ pub struct WavData {
     pub samples: Arc<Vec<f32>>, // normalized -1.0..1.0, mono mix
     pub sample_rate: u32,
     pub duration_ms: f64,
+    pub max_amplitude: f32,
 }
 
 #[derive(Clone)]
@@ -59,6 +60,19 @@ fn load_wav_from_reader<R: std::io::Read + std::io::Seek>(mut reader: WavReader<
     };
 
     let duration_ms = (mono.len() as f64 / sample_rate as f64) * 1000.0;
+    
+    // Find max amplitude for visual normalization
+    let mut max_abs = 0.0f32;
+    for &s in &mono {
+        let abs = s.abs();
+        if abs > max_abs {
+            max_abs = abs;
+        }
+    }
+    if max_abs == 0.0 {
+        max_abs = 1.0;
+    }
+
     let samples_arc = Arc::new(mono);
 
     Ok(WavWithSpec {
@@ -66,6 +80,7 @@ fn load_wav_from_reader<R: std::io::Read + std::io::Seek>(mut reader: WavReader<
             samples: samples_arc,
             sample_rate,
             duration_ms,
+            max_amplitude: max_abs,
         },
         spec_data: None,
         pitch_data: None,

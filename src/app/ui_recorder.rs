@@ -138,10 +138,13 @@ impl CopaibaApp {
 
             let samples = self.audio.recorder_samples.lock().unwrap().clone();
             if !samples.is_empty() {
+                let max_amp = samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
+                let max_amp = if max_amp == 0.0 { 1.0 } else { max_amp };
                 self.audio.recorded_wav = Some(WavData {
                     samples: Arc::new(samples),
                     sample_rate: self.audio.recorder_sample_rate,
                     duration_ms: (self.audio.recorder_samples.lock().unwrap().len() as f64 / self.audio.recorder_sample_rate as f64) * 1000.0,
+                    max_amplitude: max_amp,
                 });
             }
         }

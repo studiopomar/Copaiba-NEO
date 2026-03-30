@@ -40,7 +40,7 @@ impl CopaibaApp {
                     if ui.button(tr!("tools.btn.edit_presets")).clicked() { self.ui.show_preset_editor = true; }
 
                     ui.add_space(8.0);
-                    if ui.button("Prefix Map Editor").on_hover_text("Open dedicated prefix map tool").clicked() {
+                    if ui.button("Prefix Map (DEMO)").on_hover_text("Open dedicated prefix map tool (DEMO)").clicked() {
                         self.ui.show_pmap_editor = true;
                     }
 

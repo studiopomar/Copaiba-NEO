@@ -31,6 +31,8 @@ pub struct WaveformSettings {
     pub spline_threshold: f64,
     pub show_pitch: bool,
     pub pitch_color: Color32,
+    #[serde(default)]
+    pub visual_normalize: bool,
 }
 
 impl Default for WaveformSettings {
@@ -44,6 +46,7 @@ impl Default for WaveformSettings {
             spline_threshold: 4.0, // samples per pixel
             show_pitch: true,
             pitch_color: Color32::from_rgb(100, 200, 255),
+            visual_normalize: false,
         }
     }
 }
@@ -82,10 +85,11 @@ pub struct MinimapCache {
     pub texture: Option<egui::TextureHandle>,
     pub width: usize,  // canvas pixel width at which it was built
     pub data_ptr: usize,
+    pub normalized: bool,
 }
 
 impl Default for MinimapCache {
-    fn default() -> Self { Self { texture: None, width: 0, data_ptr: 0 } }
+    fn default() -> Self { Self { texture: None, width: 0, data_ptr: 0, normalized: false } }
 }
 
 /// Cached envelope (waveform blocks) texture
@@ -152,12 +156,14 @@ impl Default for WaveformView {
 }
 
 impl WaveformView {
-    pub fn reset_to(&mut self, duration_ms: f64) {
+    pub fn reset_to(&mut self, duration_ms: f64, preserve_y_zoom: bool) {
         self.view_start_ms = 0.0;
         self.view_range_ms = duration_ms.min(1000.0);
         self.target_view_start_ms = 0.0;
         self.target_view_range_ms = self.view_range_ms;
-        self.scale_y = 1.0;
+        if !preserve_y_zoom {
+            self.scale_y = 1.0;
+        }
         self.drag_target = DragTarget::None;
         self.scroll_accum = 0.0;
     }
@@ -384,12 +390,15 @@ pub fn draw_waveform(
         let cache = &mut view.minimap_cache;
         let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
         
-        if cache.texture.is_none() || cache.width != mini_w || cache.data_ptr != cur_wav_ptr {
+        if cache.texture.is_none() || cache.width != mini_w || cache.data_ptr != cur_wav_ptr || cache.normalized != wave_settings.visual_normalize {
             let mut img = egui::ColorImage::new([mini_w, mini_h], Color32::TRANSPARENT);
             if mini_w > 0 && !wav.samples.is_empty() {
                 let step = (wav.samples.len() / mini_w).max(1);
                 let mid_y = mini_h as f32 * 0.5;
-                let half_h = mini_h as f32 * 0.45;
+                let mut half_h = mini_h as f32 * 0.45;
+                if wave_settings.visual_normalize && wav.max_amplitude > 0.0 {
+                    half_h /= wav.max_amplitude;
+                }
                 let wc = wave_settings.top_color;
                 
                 for px in 0..mini_w {
@@ -409,6 +418,7 @@ pub fn draw_waveform(
             cache.texture = Some(ui.ctx().load_texture("minimap_cache", img, egui::TextureOptions::LINEAR));
             cache.width = mini_w;
             cache.data_ptr = cur_wav_ptr;
+            cache.normalized = wave_settings.visual_normalize;
         }
         
         // Draw cached minimap
@@ -524,7 +534,10 @@ pub fn draw_waveform(
     if px_w > 0 && s_end > s_start {
         let step_f64 = (s_end - s_start) as f64 / px_w as f64;
         let mid_y  = wave_rect.center().y;
-        let half_h = wave_rect.height() * 0.45 * view.scale_y;
+        let mut half_h = wave_rect.height() * 0.45 * view.scale_y;
+        if wave_settings.visual_normalize && wav.max_amplitude > 0.0 {
+            half_h /= wav.max_amplitude;
+        }
         
         let c_top = wave_settings.top_color;
         let c_bot = wave_settings.bot_color;
@@ -553,7 +566,7 @@ pub fn draw_waveform(
             let cache = &mut view.wave_cache;
             let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
             
-            let needs_update = cache.texture.is_none()
+            let mut needs_update = cache.texture.is_none()
                 || (!is_animating && (
                     (cache.view_start - vs).abs() > 0.05 
                     || (cache.view_range - vr).abs() > 0.05
@@ -562,12 +575,19 @@ pub fn draw_waveform(
                 || cache.width != px_w
                 || cache.height != wave_rect.height() as usize
                 || cache.data_ptr != cur_wav_ptr;
+            // Hack to check visual_normalize state changed:
+            // Let's store visual_normalize combined with scale_y: use scale_y * (if visual_normalize { -1.0 } else { 1.0 })
+            let current_cache_scale = view.scale_y * (if wave_settings.visual_normalize { -1.0 } else { 1.0 });
+            if (cache.scale_y - current_cache_scale).abs() > 0.01 { needs_update = true; }
 
             if needs_update {
                 let wh = wave_rect.height() as usize;
                 let mut img = egui::ColorImage::new([px_w, wh], Color32::TRANSPARENT);
                 let mid_px = wh as f32 * 0.5;
-                let h_px = wh as f32 * 0.45 * view.scale_y;
+                let mut h_px = wh as f32 * 0.45 * view.scale_y;
+                if wave_settings.visual_normalize && wav.max_amplitude > 0.0 {
+                    h_px /= wav.max_amplitude;
+                }
                 
                 for px in 0..px_w {
                     let s0 = s_start + (px as f64 * step_f64) as usize;
@@ -587,7 +607,7 @@ pub fn draw_waveform(
                 cache.texture = Some(ui.ctx().load_texture("wave_cache", img, egui::TextureOptions::LINEAR));
                 cache.view_start = vs;
                 cache.view_range = vr;
-                cache.scale_y = view.scale_y;
+                cache.scale_y = current_cache_scale;
                 cache.width = px_w;
                 cache.height = wh;
                 cache.data_ptr = cur_wav_ptr;

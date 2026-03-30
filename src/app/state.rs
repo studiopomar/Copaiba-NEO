@@ -201,6 +201,8 @@ pub struct VisualSettings {
     pub show_pitch: bool,
     pub show_minimap: bool,
     pub persistent_zoom: bool,
+    #[serde(default)]
+    pub persistent_y_zoom: bool,
 }
 
 impl Default for VisualSettings {
@@ -212,6 +214,7 @@ impl Default for VisualSettings {
             show_pitch: true,
             show_minimap: true,
             persistent_zoom: false,
+            persistent_y_zoom: false,
         }
     }
 }

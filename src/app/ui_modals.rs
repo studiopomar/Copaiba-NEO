@@ -145,21 +145,87 @@ impl CopaibaApp {
                     ui.checkbox(&mut self.visual.show_minimap, tr!("modal.settings.waveform.ckb.show_minimap"));
                     ui.checkbox(&mut self.visual.wave.show_pitch, tr!("modal.settings.waveform.ckb.show_pitch"));
                     ui.checkbox(&mut self.visual.persistent_zoom, tr!("modal.settings.waveform.ckb.persistent_zoom"));
+                    // Helper: Color32 → "#RRGGBB" hex string
+                    fn color_to_hex(c: egui::Color32) -> String {
+                        format!("{:02X}{:02X}{:02X}", c.r(), c.g(), c.b())
+                    }
+                    // Helper: hex string → Color32 (returns None on invalid)
+                    fn hex_to_color(s: &str) -> Option<egui::Color32> {
+                        let s = s.trim_start_matches('#');
+                        if s.len() != 6 { return None; }
+                        let r = u8::from_str_radix(&s[0..2], 16).ok()?;
+                        let g = u8::from_str_radix(&s[2..4], 16).ok()?;
+                        let b = u8::from_str_radix(&s[4..6], 16).ok()?;
+                        Some(egui::Color32::from_rgb(r, g, b))
+                    }
+
+                    // Waveform colors
                     crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                         ui.label(tr!("modal.settings.waveform.label.color"));
-                        if ui.color_edit_button_srgba(&mut self.visual.wave.top_color).changed() { self.clear_wave_cache(); }
+
+                        // Positive (top) color — picker button + hex field
+                        let mut hex_top = color_to_hex(self.visual.wave.top_color);
                         ui.label(tr!("modal.settings.waveform.label.positive"));
-                        if ui.color_edit_button_srgba(&mut self.visual.wave.bot_color).changed() { self.clear_wave_cache(); }
+                        if ui.color_edit_button_srgba(&mut self.visual.wave.top_color).changed() {
+                            self.clear_wave_cache();
+                        }
+                        let resp_top = ui.add(
+                            egui::TextEdit::singleline(&mut hex_top)
+                                .desired_width(58.0)
+                                .font(egui::TextStyle::Monospace)
+                                .hint_text("RRGGBB")
+                        );
+                        if resp_top.changed() {
+                            if let Some(c) = hex_to_color(&hex_top) {
+                                self.visual.wave.top_color = c;
+                                self.clear_wave_cache();
+                            }
+                        }
+
+                        // Negative (bot) color — picker button + hex field
+                        let mut hex_bot = color_to_hex(self.visual.wave.bot_color);
+                        ui.add_space(8.0);
                         ui.label(tr!("modal.settings.waveform.label.negative"));
+                        if ui.color_edit_button_srgba(&mut self.visual.wave.bot_color).changed() {
+                            self.clear_wave_cache();
+                        }
+                        let resp_bot = ui.add(
+                            egui::TextEdit::singleline(&mut hex_bot)
+                                .desired_width(58.0)
+                                .font(egui::TextStyle::Monospace)
+                                .hint_text("RRGGBB")
+                        );
+                        if resp_bot.changed() {
+                            if let Some(c) = hex_to_color(&hex_bot) {
+                                self.visual.wave.bot_color = c;
+                                self.clear_wave_cache();
+                            }
+                        }
                     });
+
+                    // F0 (pitch) color + spline thickness
                     crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                         ui.label(tr!("modal.settings.waveform.label.pitch_color"));
+                        let mut hex_pitch = color_to_hex(self.visual.wave.pitch_color);
                         ui.color_edit_button_srgba(&mut self.visual.wave.pitch_color);
+                        let resp_pitch = ui.add(
+                            egui::TextEdit::singleline(&mut hex_pitch)
+                                .desired_width(58.0)
+                                .font(egui::TextStyle::Monospace)
+                                .hint_text("RRGGBB")
+                        );
+                        if resp_pitch.changed() {
+                            if let Some(c) = hex_to_color(&hex_pitch) {
+                                self.visual.wave.pitch_color = c;
+                            }
+                        }
+
                         ui.add_space(8.0);
                         ui.label(tr!("modal.settings.waveform.label.spline"));
-                        if ui.color_edit_button_srgba(&mut self.visual.wave.line_color).changed() { self.clear_wave_cache(); }
                         ui.add(egui::Slider::new(&mut self.visual.wave.thickness, 0.5..=5.0).step_by(0.1));
                     });
+
+
                     ui.separator();
 
                     ui.heading(format!("🌐 {}", tr!("modal.settings.encoding.heading")));

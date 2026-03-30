@@ -144,6 +144,15 @@ impl CopaibaApp {
                         tr!("menu.view.auto_scroll"),
                     );
                     ui.separator();
+                    ui.checkbox(
+                        &mut self.visual.wave.visual_normalize,
+                        tr!("menu.view.normalize"),
+                    );
+                    ui.checkbox(
+                        &mut self.visual.persistent_y_zoom,
+                        tr!("menu.view.persistent_y_zoom"),
+                    );
+                    ui.separator();
                     if ui
                         .button(tr!("menu.view.reset"))
                         .clicked()

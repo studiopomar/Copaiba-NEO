@@ -14,6 +14,7 @@ use std::sync::Arc;
 use egui::{Color32, Stroke, Vec2};
 use app::CopaibaApp;
 use app::state::AppTheme;
+use app::bidi;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -21,7 +22,16 @@ fn main() -> eframe::Result {
     // Load translations at compile time
     let _ = egui_i18n::load_translations_from_text("en-US", include_str!("assets/en-US.egl"));
     let _ = egui_i18n::load_translations_from_text("pt-BR", include_str!("assets/pt-BR.egl"));
-    let _ = egui_i18n::load_translations_from_text("ar-SA", include_str!("assets/ar-SA.egl"));
+
+    // Arabic translations need Unicode Bidi + shaping before being fed to egui,
+    // because egui has no built-in RTL text engine.  We pre-process each value
+    // in the .egl file through `bidi::reshape` so that `tr!()` already returns
+    // visually-ordered, shaped text.
+    {
+        let raw_ar = include_str!("assets/ar-SA.egl");
+        let reshaped = reshape_egl_arabic(raw_ar);
+        let _ = egui_i18n::load_translations_from_text("ar-SA", &reshaped);
+    }
 
     println!("Starting Copaiba NEO...");
     
@@ -116,6 +126,33 @@ fn main() -> eframe::Result {
     }
 }
 
+// ── Arabic text pre-processing ──────────────────────────────────────────────
+
+/// Parse the ar-SA.egl key=value lines and apply Arabic shaping + visual
+/// reordering to each value, then return the whole file as a new String.
+/// Lines starting with `#` (comments) and blank lines are kept verbatim.
+fn reshape_egl_arabic(egl: &str) -> String {
+    let mut out = String::with_capacity(egl.len() + 512);
+    for line in egl.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('#') || trimmed.is_empty() {
+            out.push_str(line);
+        } else if let Some(eq) = trimmed.find('=') {
+            // key = value
+            let key = &trimmed[..eq];
+            let value = &trimmed[eq + 1..];
+            let shaped = bidi::reshape(value);
+            out.push_str(key);
+            out.push('=');
+            out.push_str(&shaped);
+        } else {
+            out.push_str(line);
+        }
+        out.push('\n');
+    }
+    out
+}
+
 // ── Font setup ────────────────────────────────────────────────────────────────
 
 fn setup_fonts(ctx: &egui::Context) {
@@ -166,27 +203,39 @@ fn setup_fonts(ctx: &egui::Context) {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        // Arabic Fonts
+        // Arabic Fonts — must have the Arabic Presentation Forms block (U+FE70-FEFF)
+        // since ar_reshaper outputs those codepoints.
+        // "Traditional Arabic" (times.ttf) and "Scheherazade New" are the most
+        // complete on Windows; Noto Naskh is best on Linux.
         let arabic_fonts = [
+            // Windows — fonts with full Arabic Presentation Forms coverage
+            "C:\\Windows\\Fonts\\times.ttf",          // Times New Roman (has Arabic PF)
+            "C:\\Windows\\Fonts\\arabtype.ttf",       // Arabic Typesetting
+            "C:\\Windows\\Fonts\\tradbdo.ttf",        // Traditional Arabic Bold
+            "C:\\Windows\\Fonts\\trad.ttf",           // Traditional Arabic
+            "C:\\Windows\\Fonts\\tahoma.ttf",         // Tahoma (good Arabic PF coverage)
+            "C:\\Windows\\Fonts\\scheherazadnew.ttf", // Scheherazade New
+            "C:\\Windows\\Fonts\\aldhabi.ttf",        // Al Dhabi
+            "C:\\Windows\\Fonts\\alfirat.ttf",        // Al Firat
+            "C:\\Windows\\Fonts\\segoeui.ttf",        // Segoe UI (fallback)
+            "C:\\Windows\\Fonts\\arial.ttf",          // Arial (last resort)
             // Linux
             "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
             "/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf",
-            "/usr/share/fonts/truetype/noto/NotoKufiArabic-Regular.ttf",
             "/usr/share/fonts/opentype/noto/NotoNaskhArabic-Regular.ttf",
             "/usr/share/fonts/opentype/noto/NotoSansArabic-Regular.ttf",
-            "/usr/share/fonts/opentype/noto/NotoKufiArabic-Regular.ttf",
-            "/usr/share/fonts/truetype/droid/DroidKufi-Regular.ttf",
             "/usr/share/fonts/truetype/droid/DroidNaskh-Regular.ttf",
-            // Windows
-            "C:\\Windows\\Fonts\\tahoma.ttf",      // Tahoma (Traditional Arabic UI)
-            "C:\\Windows\\Fonts\\segoeui.ttf",     // Segoe UI (Modern Windows UI)
-            "C:\\Windows\\Fonts\\arial.ttf",       // Arial
         ];
 
         for path in arabic_fonts {
             if Path::new(path).exists() {
                 if let Ok(data) = std::fs::read(path) {
                     fonts.font_data.insert("arabic_font".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+                    // Push to END: egui falls back to this font only when the
+                    // default font lacks a glyph. Arabic Presentation Forms
+                    // (U+FE70-FEFF) are not in the default egui font, so Arabic
+                    // text will use arabic_font while all other text keeps the
+                    // original clean font.
                     fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().push("arabic_font".to_owned());
                     fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().push("arabic_font".to_owned());
                     break;

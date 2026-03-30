@@ -47,6 +47,8 @@ menu.view = Visualizar
 menu.view.spectrogram = Espectrograma
 menu.view.minimap = Minimapa
 menu.view.auto_scroll = Auto-scroll para Selecionado
+menu.view.normalize = Normalizar Visualização do Waveform
+menu.view.persistent_y_zoom = Manter Zoom Vertical (ALT+Scroll) em todos os aliases
 menu.view.reset = Redefinir Visualizações
 # Menu - Play
 menu.play = Reprodução
@@ -99,7 +101,7 @@ modal.settings.waveform.ckb.persistent_zoom = Manter zoom ao trocar alias
 modal.settings.waveform.label.color = Cor do Waveform:
 modal.settings.waveform.label.positive = Positivo
 modal.settings.waveform.label.negative = Negativo
-modal.settings.waveform.label.pitch_color = Cor do Pitch:
+modal.settings.waveform.label.pitch_color = Cor do F0:
 modal.settings.waveform.label.spline = Linha Spline:
 modal.settings.encoding.heading = Codificação
 modal.settings.encoding.label = Encoding de texto:
