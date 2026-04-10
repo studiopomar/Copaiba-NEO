@@ -92,7 +92,7 @@ fn setup_app_box(cc: &eframe::CreationContext<'_>) -> Box<dyn eframe::App> {
     apply_theme(&cc.egui_ctx, app.config.theme);
     let lang = app.config.language.clone();
     app.set_language(&lang);
-    
+
     if app.tabs.len() == 1 && (app.tabs[0].name.is_empty() || app.tabs[0].name == "Novo Set") {
         app.tabs[0].name = egui_i18n::tr!("state.tab.default_name").to_string();
     }

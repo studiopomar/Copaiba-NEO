@@ -63,19 +63,18 @@ impl CopaibaApp {
                                 row.col(|ui| {
                                     if is_selected { ui.scroll_to_cursor(Some(egui::Align::Center)); }
                                     let id = egui::Id::new(("cell", fi, 0));
-                                    if ui.push_id(id, |ui| ui.checkbox(&mut entry.done, "")).response.changed() { 
+                                    let resp = ui.push_id(id, |ui| ui.checkbox(&mut entry.done, "")).response;
+                                    if resp.changed() { 
                                         tab.dirty = true;
                                         play_sound = true;
                                     }
-                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 0; }
+                                    if resp.clicked() { new_sel = Some(fi); tab.focus_col = 0; }
                                 });
 
                                 row.col(|ui| {
-                                    let id = egui::Id::new(("cell", fi, 1));
                                     let is_focused = is_selected && current_focus_col == 1;
                                     let resp = ui.selectable_label(is_focused, &entry.filename);
                                     if resp.clicked() { new_sel = Some(fi); tab.focus_col = 1; }
-                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 1; }
                                 });
 
                                 row.col(|ui| {
@@ -88,7 +87,6 @@ impl CopaibaApp {
                                         tab.dirty = true; 
                                     }
                                     if resp.clicked() { new_sel = Some(fi); tab.focus_col = 2; }
-                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 2; }
                                 });
 
                                 macro_rules! num_col {
@@ -100,7 +98,6 @@ impl CopaibaApp {
                                             play_sound = true;
                                         }
                                         if ir.response.clicked() { new_sel = Some(fi); tab.focus_col = $col_idx; }
-                                        if $ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = $col_idx; }
                                     }
                                 }
 
@@ -116,7 +113,6 @@ impl CopaibaApp {
                                         play_sound = true;
                                     }
                                     if ir.response.clicked() { new_sel = Some(fi); tab.focus_col = 7; }
-                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 7; }
                                     ir.response.context_menu(|ui| {
                                         if ui.button(tr!("table.cutoff.invert")).clicked() {
                                             if entry.cutoff < 0.0 {
@@ -138,7 +134,6 @@ impl CopaibaApp {
                                         play_sound = true;
                                     }
                                     if resp.clicked() { new_sel = Some(fi); tab.focus_col = 8; }
-                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 8; }
                                 });
                             }
                         });
