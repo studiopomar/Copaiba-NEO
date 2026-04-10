@@ -21,7 +21,6 @@ egui_extras = { version = "0.31", features = ["default", "image", "svg", "serde"
 image = "0.25"
 hound = "3.5"
 encoding_rs = "0.8"
-rfd = "0.15"
 rodio = "0.20"
 rustfft = "6.4.1"
 realfft = "3.5.0"
@@ -47,6 +46,9 @@ wasm-logger = "0.2"
 android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.14"
 log = "0.4"
+
+[target.'cfg(any(windows, target_os = "linux", target_os = "macos"))'.dependencies]
+rfd = "0.15"
 
 [build-dependencies]
 winres = "0.1"

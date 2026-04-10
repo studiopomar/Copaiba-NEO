@@ -177,7 +177,7 @@ impl CopaibaApp {
                             ui.label(RichText::new(res.file_name().unwrap_or_default().to_string_lossy()).size(9.0).color(ui.visuals().weak_text_color()));
                         }
                         if ui.add(egui::Button::new(RichText::new(format!("⚙ {}", tr!("header.resampler.select"))).strong())).clicked() {
-                            #[cfg(not(target_arch = "wasm32"))]
+                            #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
                             if let Some(path) = rfd::FileDialog::new().pick_file() { self.config.resampler_path = Some(path); }
                         }
                     });

@@ -125,7 +125,7 @@ impl CopaibaApp {
 
     pub fn resample_current(&mut self) {
         if self.config.resampler_path.is_none() {
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
             if let Some(path) = rfd::FileDialog::new()
                 .set_title(tr!("audio.resampler.select_file"))
                 .add_filter("Executáveis", &["exe", "bin", "sh"])

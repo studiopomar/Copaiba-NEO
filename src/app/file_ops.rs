@@ -63,7 +63,7 @@ impl CopaibaApp {
     }
 
     pub fn open_voicebank_dir(&mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             let mut otos = Vec::new();
             self.scan_for_oto(&path, &mut otos);
@@ -241,7 +241,7 @@ impl CopaibaApp {
     }
 
     pub fn open_oto(&mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("oto.ini", &["ini"])
             .pick_file()
@@ -475,7 +475,7 @@ impl CopaibaApp {
     }
 
     pub fn save_as(&mut self) {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
         if let Some(path) = rfd::FileDialog::new()
             .set_file_name("oto.ini")
             .add_filter("oto.ini", &["ini"])
