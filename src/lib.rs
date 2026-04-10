@@ -33,8 +33,9 @@ pub fn run() -> eframe::Result {
         let icon_data = {
             let icon_bytes = include_bytes!("../favicon_mori.png");
             if let Ok(img) = image::load_from_memory(icon_bytes) {
-                use image::GenericImageView;
-                let (width, height) = img.dimensions();
+                // Resize to max 256x256 to avoid X11 MaximumRequestLengthExceeded
+                let img = img.thumbnail(256, 256);
+                let (width, height) = (img.width(), img.height());
                 let rgba = img.to_rgba8().into_raw();
                 Some(egui::IconData { rgba, width, height })
             } else {
@@ -48,6 +49,7 @@ pub fn run() -> eframe::Result {
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([800.0, 500.0])
                 .with_icon(icon_data.unwrap_or_default()),
+            multisampling: 0,
             ..Default::default()
         };
 
