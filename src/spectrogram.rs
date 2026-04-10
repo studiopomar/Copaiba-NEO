@@ -143,7 +143,17 @@ pub fn render_spectrogram_view(
         
         let center_sample = t_ms * sr / 1000.0;
         let frame_f = center_sample / hop;
-        
+
+        // If this pixel is past the end of the audio, paint it black (silence).
+        // Without this check the code below clamps frame_f to total_frames-1 and
+        // repeats the last spectrogram frame for every out-of-bounds pixel, which
+        // produces the bright horizontal stripe artifact when the view extends
+        // beyond the audio duration.
+        if frame_f >= total_frames as f64 || t_ms < 0.0 {
+            // Leave these pixels as the initialised BLACK — skip to next column
+            continue;
+        }
+
         // Time interpolation bounds (Bicubic requires 4 points)
         let f1 = (frame_f as usize).min(total_frames.saturating_sub(1));
         let f0 = f1.saturating_sub(1);

@@ -2,11 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v140] - 2026-03-24
+## [v180] - 2026-04-10
 
-### 🇺🇸 English
+### English
 
 #### Added
+
+- **Preset multi-selection (Shortcut Batching)**: Presets (`Ctrl + 1..5`) now apply to all selected rows in the table simultaneously.
+- **Improved Scroll Navigation**: Alias scrolling is now based on discrete notches (`raw_scroll_delta`) for higher precision, preventing accidental skips.
+
+#### Fixed
+
+- **Cutoff Textbox Interaction**: Fixed a bug where clicking the Cutoff textbox wouldn't activate direct text entry mode.
+- **Stale Waveform/Spectrogram Display**: Resolved issue where navigating between aliases in the same audio file failed to update visuals, causing marker misalignment until a manual zoom.
+- **Waveform/Spectrogram UV Tiling**: Eliminated "noise" artifacts (repeated audio chunks) at the right edge of the view during zoom-out by clamping texture coordinates.
+- **Spectrogram Out-of-bounds Rendering**: Fixed bright horizontal stripes appearing when the view window extended beyond the actual audio duration.
+- **Scroll/Zoom Responsiveness**: Restored smooth, fluid feel for Zoom and Pan while keeping Alias navigation crisp and notch-based.
+
+---
+
+### Português
+
+#### Adicionados
+
+- **Aplicação de Presets em Lote (Multi-seleção)**: Atalhos de presets (`Ctrl + 1..5`) agora são aplicados a todas as linhas selecionadas na tabela simultaneamente.
+- **Navegação de Scroll Aprimorada**: Scroll de troca de alias agora utiliza "notches" discretos para maior precisão, prevenindo pulos acidentais de múltiplas entradas.
+
+#### Corrigidos
+
+- **Edição da Caixa de Texto (Cutoff)**: Corrigido bug onde clicar no valor do Cutoff não abria a caixa de edição de texto.
+- **Gráficos Obsoletos na Navegação**: Resolvido problema onde navegar entre aliases do mesmo arquivo de áudio não atualizava a Waveform/Espectrograma, causando desalinhamento visual.
+- **Artefatos de Repetição (Tiling)**: Eliminado o "ruído" (repetição do início do áudio) no canto direito da tela durante zoom-out através do travamento (clamp) de coordenadas UV.
+- **Renderização Fora da Duração**: Corrigido o surgimento de listras horizontais persistentes quando a visualização ultrapassava o final real do arquivo de áudio.
+- **Fluidez do Scroll**: Restaurada a aceleração suave para Zoom e Pan, mantendo a troca de aliases precisa e baseada nos "cliques" do scroll.
+
+---
+
+## [v140] - 2026-03-24
+
+### English
+
+#### Added
+
 - **UI Header**: New tab configuration bar displaying character name, path, and image (60x60 with rounded corners).
 - **Metadata (Modals)**: Readme and License texts reading through dedicated modal windows.
 - **Synthesis Duration**: Custom duration control (default 350ms) in the header for the resampling test.
@@ -27,6 +64,7 @@ All notable changes to this project will be documented in this file.
 - **Synthesis Test**: App-integrated voice resampling via CLI calls.
 
 #### Fixed
+
 - **Multipitch/Multiplex Voicebanks**: Resolved subfolder loading failures where Character images and info would not load if separated in the voicebank root (Recursive search up to 4 levels for `character.txt`).
 - **Dynamic Anchoring of Cutoff**: Fixed waveform logic that failed to anchor positive `Cutoffs` to the end of the audio, causing them to drift when dragging the Offset.
 - **Text & Translations**: Live translations and texts (i18n) configured and now visibly activating in all native elements.
@@ -39,6 +77,7 @@ All notable changes to this project will be documented in this file.
 - **Sync: Minimap Colors**: Minimap inherits the primary colors from the clip view window.
 
 #### Refactored
+
 - Remodeled windows into separate modules (`src/app/ui_modals.rs` and `ui_header.rs`).
 - Unified Sound and Splash UI correlations to modularize asynchronous initial loading.
 - Decoupled spectrogram recomputation from UI render parameter loops.
@@ -46,9 +85,10 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-### 🇧🇷 Português
+### Português
 
 #### Adicionados
+
 - **UI Header**: Nova barra de configuração das abas exibindo nome, caminho e imagem do personagem (60x60 com cantos arredondados).
 - **Metadados (Modais)**: Leitura de textos (Readme e License) através de janelas modais dedicadas.
 - **Duração de Síntese**: Controle de duração personalizado (padrão de 350ms) no header para o resampler.
@@ -69,6 +109,7 @@ All notable changes to this project will be documented in this file.
 - **Synthesis Test**: Integração de renderização no aplicativo via chamada CLI.
 
 #### Corrigidos
+
 - **Voicebanks Multipitch/Multiplex**: Resolvido falhas de carregamento de pastas-filhas onde imagens de character e info paravam de carregar se separadas na raiz principal do voicebank. (Busca recursiva de até 4 níveis pelo `character.txt`).
 - **Ancoragem Dinâmica de Cutoff**: Consertado lógica da waveform que não amarrava `Cutoffs` positivos ao final do áudio, causando desvios durante o arrasto do Offset.
 - **Texto e Traduções**: Traduções e textos em tempo-real (i18n) configurados e agora ativando de forma visível em todos os elementos nativos.
@@ -81,6 +122,7 @@ All notable changes to this project will be documented in this file.
 - **Sync: Cores do Minimapa**: Minimapa herda cores primárias da janela de visualização do clip.
 
 #### Refatorados
+
 - Remodelagem das janelas em módulos separados (`src/app/ui_modals.rs` e `ui_header.rs`).
 - Correlações de UI de sons e Splash unificadas para modularizar carregamentos assíncronos iniciais.
 - Desacoplamento da recomputacão do espetrograma frente a loops UI render parameters.

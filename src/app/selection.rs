@@ -131,14 +131,18 @@ impl CopaibaApp {
             {
                 let tab = self.cur_mut();
                 if prev_fname.as_deref() != Some(fname.as_str()) {
-                    // WAV file changed: clear BOTH caches so textures are
-                    // unconditionally rebuilt next frame (cache.texture.is_none()
-                    // always triggers needs_update regardless of is_animating or
-                    // data_ptr comparison).
-                    tab.wave_view.spec_cache  = crate::waveform::SpecCache::default();
-                    tab.wave_view.wave_cache  = crate::waveform::WaveCache::default();
+                    // WAV file changed: clear ALL caches unconditionally.
+                    tab.wave_view.spec_cache    = crate::waveform::SpecCache::default();
+                    tab.wave_view.wave_cache    = crate::waveform::WaveCache::default();
                     tab.wave_view.minimap_cache = crate::waveform::MinimapCache::default();
                     new_wav = true;
+                } else {
+                    // Same WAV file, but viewport will move to new entry's offset.
+                    // The spec and wave caches embed their rendered view_start/range,
+                    // so they must be invalidated here or they'll show the old
+                    // position until a zoom event triggers a rebuild.
+                    tab.wave_view.spec_cache = crate::waveform::SpecCache::default();
+                    tab.wave_view.wave_cache = crate::waveform::WaveCache::default();
                 }
             }
 

@@ -23,8 +23,7 @@ jobs:
         mkdir -p AppDir/usr/bin
         cp target/release/copaiba_neo AppDir/usr/bin/
         
-        # Cria um ícone SVG vazio/invisível para enganar o empacotador do Linux
-        echo '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="transparent"/></svg>' > AppDir/icon.svg
+        cp favicon_mori.png AppDir/icon.png
         
         cat > AppDir/copaiba_neo.desktop <<EOF
         [Desktop Entry]
@@ -56,10 +55,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Create Dummy Icon for build.rs
-      run: |
-        choco install imagemagick
-        magick -size 256x256 xc:transparent icon.ico
+    - name: Create Icon for build.rs
+      run: magick favicon_mori.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
     - name: Build
       run: cargo build --release
     - name: Upload Windows Binary

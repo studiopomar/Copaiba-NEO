@@ -217,19 +217,29 @@ impl CopaibaApp {
             let keys = [egui::Key::Num1, egui::Key::Num2, egui::Key::Num3, egui::Key::Num4, egui::Key::Num5];
             for (i, key) in keys.iter().enumerate() {
                 if ctx.input_mut(|inp| inp.consume_key(egui::Modifiers::CTRL, *key)) {
-                    let (idx, p) = {
+                    let p = self.presets[i].clone();
+                    // Collect all indices to apply preset to (multi-selection or single)
+                    let indices: Vec<usize> = {
                         let tab = self.cur();
-                        (tab.filtered.get(tab.selected).copied(), self.presets[i].clone())
+                        if tab.multi_selection.len() > 1 {
+                            tab.multi_selection.iter()
+                                .filter_map(|&fi| tab.filtered.get(fi).copied())
+                                .collect()
+                        } else {
+                            tab.filtered.get(tab.selected).copied().into_iter().collect()
+                        }
                     };
-                    if let Some(idx) = idx {
+                    if !indices.is_empty() {
                         self.save_undo_state();
                         let tab = self.cur_mut();
-                        if let Some(entry) = tab.entries.get_mut(idx) {
-                            entry.consonant = p.consonant;
-                            entry.cutoff = p.cutoff;
-                            entry.preutter = p.preutter;
-                            entry.overlap = p.overlap;
-                            tab.dirty = true;
+                        for idx in indices {
+                            if let Some(entry) = tab.entries.get_mut(idx) {
+                                entry.consonant = p.consonant;
+                                entry.cutoff = p.cutoff;
+                                entry.preutter = p.preutter;
+                                entry.overlap = p.overlap;
+                                tab.dirty = true;
+                            }
                         }
                         self.play_key_sound();
                     }

@@ -274,17 +274,22 @@ pub fn draw_waveform(
             view.mouse_ms = Some(view.view_start_ms + t * view.view_range_ms);
         }
 
-        let scroll_delta_y = ui.input(|i| i.smooth_scroll_delta.y + i.raw_scroll_delta.y);
-        let scroll_delta_x = ui.input(|i| i.smooth_scroll_delta.x + i.raw_scroll_delta.x);
+        // smooth_scroll_delta is used for zoom and pan — it gives fluid, OS-level
+        // acceleration. raw_scroll_delta is used only for alias navigation — it
+        // maps to discrete mouse notches so we can count them precisely.
+        let smooth_y = ui.input(|i| i.smooth_scroll_delta.y);
+        let smooth_x = ui.input(|i| i.smooth_scroll_delta.x);
+        let raw_y    = ui.input(|i| i.raw_scroll_delta.y);
         let zoom = ui.input(|i| i.zoom_delta());
         let mods = ui.input(|i| i.modifiers);
-        
+
         let mut zoom_factor = 1.0;
         if mods.ctrl {
-            if zoom != 1.0 { 
-                zoom_factor = (1.0 / zoom) as f64; 
-            } else if scroll_delta_y.abs() > 0.1 { 
-                zoom_factor = (-scroll_delta_y / 300.0).exp() as f64; 
+            if zoom != 1.0 {
+                zoom_factor = (1.0 / zoom) as f64;
+            } else if smooth_y.abs() > 0.1 {
+                // Use smooth delta for fluid zoom feel
+                zoom_factor = (-smooth_y / 300.0).exp() as f64;
             }
         }
 
@@ -299,17 +304,21 @@ pub fn draw_waveform(
                 let t = (pos.x - wave_rect.left()) as f64 / wave_rect.width() as f64;
                 view.target_view_start_ms = center - t * view.target_view_range_ms;
             }
-        } else if mods.shift && (scroll_delta_x.abs() > 0.1 || scroll_delta_y.abs() > 0.1) {
-            let actual_scroll = if scroll_delta_x.abs() > 0.1 { scroll_delta_x } else { scroll_delta_y };
+        } else if mods.shift && (smooth_x.abs() > 0.1 || smooth_y.abs() > 0.1) {
+            // Use smooth delta for fluid pan
+            let actual_scroll = if smooth_x.abs() > 0.1 { smooth_x } else { smooth_y };
             let pan = -actual_scroll as f64 * (view.target_view_range_ms / 1000.0);
             view.target_view_start_ms += pan;
-        } else if scroll_delta_y.abs() > 0.1 {
+        } else if raw_y.abs() > 0.1 {
             if mods.alt {
-                let factor = (scroll_delta_y / 150.0).exp() as f32;
+                let factor = (raw_y / 150.0).exp() as f32;
                 view.scale_y = (view.scale_y * factor).clamp(0.1, 10.0);
             } else {
-                view.scroll_accum += scroll_delta_y;
-                let threshold = 30.0;
+                // Alias navigation: accumulate raw notch values only.
+                // raw_scroll_delta is discrete (~15-30 px per notch on most mice).
+                // Threshold of 40 means 1-2 notches per step, never doubling.
+                view.scroll_accum += raw_y;
+                let threshold = 40.0;
                 if view.scroll_accum > threshold {
                     nav_delta = -1;
                     view.scroll_accum = 0.0;
@@ -323,6 +332,10 @@ pub fn draw_waveform(
             view.scroll_accum *= 0.8;
             if view.scroll_accum.abs() < 1.0 { view.scroll_accum = 0.0; }
         }
+
+        // Use smooth delta variables for the clamp check (zoom/pan)
+        let scroll_delta_x = smooth_x;
+        let scroll_delta_y = smooth_y;
         
         if zoom_factor != 1.0 || scroll_delta_x.abs() > 0.1 || (mods.shift && scroll_delta_y.abs() > 0.1) {
             view.target_view_start_ms = view.target_view_start_ms.clamp(0.0, (wav.duration_ms - view.target_view_range_ms).max(0.0));
@@ -495,13 +508,21 @@ pub fn draw_waveform(
         let diff_range = (cache.view_range - vr).abs();
         let cur_sd_ptr = std::sync::Arc::as_ptr(&sd.frames_mag) as usize;
         
-        // Use the global is_animating to decide if we wait
+        // needs_update: always rebuild when texture is absent, view moved, size
+        // changed, or data changed. The !is_animating guard was removed because
+        // it caused stale textures after navigation: the view snaps immediately
+        // so is_animating may still be true on the first frame, but by the time
+        // it turns false the diff is already 0 and the cache is silently kept.
+        // UV-stretching (below) still gives smooth zoom visuals during animation.
         let needs_update = cache.texture.is_none()
-            || (!is_animating && (diff_start > 0.05 || diff_range > 0.05))
+            || diff_start > 0.5
+            || diff_range > 0.5
             || cache.width != pw
             || cache.height != ph
             || cache.data_ptr != cur_sd_ptr;
 
+
+        let cache_was_rebuilt;
         if needs_update {
             let img = render_spectrogram_view(sd, vs, vr, pw, ph, spec_settings);
             let tex = ui.ctx().load_texture("_spec_live", img, egui::TextureOptions::NEAREST);
@@ -511,15 +532,23 @@ pub fn draw_waveform(
             cache.width = pw;
             cache.height = ph;
             cache.data_ptr = cur_sd_ptr;
+            cache_was_rebuilt = true;
+        } else {
+            cache_was_rebuilt = false;
         }
 
         if let Some(ref tex) = cache.texture {
-            // During animation, stretch the old texture to avoid recalculated stutter
+            // UV-stretch only when the cache is genuinely stale (not just rebuilt
+            // this frame). When stale AND animating, we map the current
+            // [vs..ve] window into the old texture's coordinate space.
+            // CRITICAL: clamp UVs to [0,1] — egui tiles the texture for UV > 1,
+            // which shows the start of the audio file as a spike at the right
+            // edge whenever the view range is wider than when the cache was built.
             let mut uv = Rect::from_min_max(Pos2::new(0.0, 0.0), Pos2::new(1.0, 1.0));
-            if is_animating {
-                let s_rel = (vs - cache.view_start) / cache.view_range;
-                let e_rel = (ve - cache.view_start) / cache.view_range;
-                uv = Rect::from_min_max(Pos2::new(s_rel as f32, 0.0), Pos2::new(e_rel as f32, 1.0));
+            if is_animating && !cache_was_rebuilt && cache.view_range > 0.0 {
+                let s_rel = ((vs - cache.view_start) / cache.view_range).clamp(0.0, 1.0) as f32;
+                let e_rel = ((ve - cache.view_start) / cache.view_range).clamp(0.0, 1.0) as f32;
+                uv = Rect::from_min_max(Pos2::new(s_rel, 0.0), Pos2::new(e_rel, 1.0));
             }
             painter.image(tex.into(), spec_rect, uv, Color32::WHITE);
         }
@@ -566,20 +595,17 @@ pub fn draw_waveform(
             let cache = &mut view.wave_cache;
             let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
             
-            let mut needs_update = cache.texture.is_none()
-                || (!is_animating && (
-                    (cache.view_start - vs).abs() > 0.05 
-                    || (cache.view_range - vr).abs() > 0.05
-                    || (cache.scale_y - view.scale_y).abs() > 0.01
-                ))
+            let current_cache_scale = view.scale_y * (if wave_settings.visual_normalize { -1.0 } else { 1.0 });
+            let needs_update = cache.texture.is_none()
+                || (cache.view_start - vs).abs() > 0.5
+                || (cache.view_range - vr).abs() > 0.5
+                || (cache.scale_y - current_cache_scale).abs() > 0.01
                 || cache.width != px_w
                 || cache.height != wave_rect.height() as usize
                 || cache.data_ptr != cur_wav_ptr;
-            // Hack to check visual_normalize state changed:
-            // Let's store visual_normalize combined with scale_y: use scale_y * (if visual_normalize { -1.0 } else { 1.0 })
-            let current_cache_scale = view.scale_y * (if wave_settings.visual_normalize { -1.0 } else { 1.0 });
-            if (cache.scale_y - current_cache_scale).abs() > 0.01 { needs_update = true; }
 
+
+            let wave_cache_was_rebuilt;
             if needs_update {
                 let wh = wave_rect.height() as usize;
                 let mut img = egui::ColorImage::new([px_w, wh], Color32::TRANSPARENT);
@@ -611,17 +637,24 @@ pub fn draw_waveform(
                 cache.width = px_w;
                 cache.height = wh;
                 cache.data_ptr = cur_wav_ptr;
+                wave_cache_was_rebuilt = true;
+            } else {
+                wave_cache_was_rebuilt = false;
             }
 
             if let Some(ref tex) = cache.texture {
                 let mut uv = Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0));
-                if is_animating {
-                    let s_rel = (vs - cache.view_start) / cache.view_range;
-                    let e_rel = (ve - cache.view_start) / cache.view_range;
-                    uv = Rect::from_min_max(pos2(s_rel as f32, 0.0), pos2(e_rel as f32, 1.0));
+                // Only UV-stretch when genuinely stale (not rebuilt this frame).
+                // Clamp UVs to [0,1]: UV > 1 causes egui to tile the texture,
+                // showing the audio start as a spike at the right edge on zoom-out.
+                if is_animating && !wave_cache_was_rebuilt && cache.view_range > 0.0 {
+                    let s_rel = ((vs - cache.view_start) / cache.view_range).clamp(0.0, 1.0) as f32;
+                    let e_rel = ((ve - cache.view_start) / cache.view_range).clamp(0.0, 1.0) as f32;
+                    uv = Rect::from_min_max(pos2(s_rel, 0.0), pos2(e_rel, 1.0));
                 }
                 painter.image(tex.into(), wave_rect, uv, Color32::WHITE);
             }
+
         }
     }
     

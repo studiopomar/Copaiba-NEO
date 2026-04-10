@@ -30,18 +30,21 @@ pub fn run() -> eframe::Result {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let icon_data = if let Ok(img) = image::open("favicon_mori.png") {
-            use image::GenericImageView;
-            let (width, height) = img.dimensions();
-            let rgba = img.to_rgba8().into_raw();
-            Some(egui::IconData { rgba, width, height })
-        } else {
-            None
+        let icon_data = {
+            let icon_bytes = include_bytes!("../favicon_mori.png");
+            if let Ok(img) = image::load_from_memory(icon_bytes) {
+                use image::GenericImageView;
+                let (width, height) = img.dimensions();
+                let rgba = img.to_rgba8().into_raw();
+                Some(egui::IconData { rgba, width, height })
+            } else {
+                None
+            }
         };
 
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_title("Copaiba NEO")
+                .with_title("Copaiba NEO v180")
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([800.0, 500.0])
                 .with_icon(icon_data.unwrap_or_default()),
@@ -49,7 +52,7 @@ pub fn run() -> eframe::Result {
         };
 
         eframe::run_native(
-            "Copaiba NEO",
+            "Copaiba NEO v180",
             options,
             Box::new(|cc| {
                 Ok(setup_app_box(cc))
@@ -109,7 +112,7 @@ fn android_main(app: android_activity::AndroidApp) {
     };
 
     eframe::run_native(
-        "Copaiba NEO",
+        "Copaiba NEO v180",
         options,
         Box::new(|cc| {
             Ok(setup_app_box(cc))

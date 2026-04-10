@@ -16,7 +16,7 @@ header.resampler.test = Testar alias
 header.resampler.hover = Configure um resampler antes de testar!
 header.resampler.status = Configure um resampler primeiro!
 # Home
-home.title = Copaiba NEO
+home.title = Copaiba NEO v180
 home.subtitle = Editor de oto.ini
 home.btn.open_voicebank = Abrir Voicebank
 home.label.recent = Recentes

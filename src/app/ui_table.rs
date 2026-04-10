@@ -108,15 +108,20 @@ impl CopaibaApp {
                                 row.col(|ui| { num_col!(ui, &mut entry.overlap, 4); });
                                 row.col(|ui| { num_col!(ui, &mut entry.preutter, 5); });
                                 row.col(|ui| { num_col!(ui, &mut entry.consonant, 6); });
-                                row.col(|ui| { 
-                                    num_col!(ui, &mut entry.cutoff, 7); 
-                                    ui.interact(ui.max_rect(), ui.id().with("ctx"), egui::Sense::click()).context_menu(|ui| {
+                                row.col(|ui| {
+                                    let id = egui::Id::new(("cell", fi, 7));
+                                    let ir = ui.push_id(id, |ui| ui.add(egui::DragValue::new(&mut entry.cutoff).speed(1.0)));
+                                    if ir.response.changed() { 
+                                        tab.dirty = true; 
+                                        play_sound = true;
+                                    }
+                                    if ir.response.clicked() { new_sel = Some(fi); tab.focus_col = 7; }
+                                    if ui.memory(|m| m.has_focus(id)) { new_sel = Some(fi); tab.focus_col = 7; }
+                                    ir.response.context_menu(|ui| {
                                         if ui.button(tr!("table.cutoff.invert")).clicked() {
                                             if entry.cutoff < 0.0 {
-                                                // Convert to positive (relative to end) - approximate
                                                 entry.cutoff = 0.0; 
                                             } else {
-                                                // Convert to negative (relative to offset)
                                                 entry.cutoff = -1.0;
                                             }
                                             tab.dirty = true;
