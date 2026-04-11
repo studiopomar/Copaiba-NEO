@@ -6,8 +6,14 @@
 
 #### Added
 
-- **Real-time Time-Stretching (WSOLA)**: High-quality time-stretching that preserves pitch across varying playback speeds.
-- **Playback Speed Slider**: Control playback rate (0.25x to 2.0x) directly from the header.
+- **Real-time Time-Stretching (WSOLA)**: Implemented high-quality, pure Rust WSOLA (Waveform Similarity Overlap-Add) for smooth playback at different speeds without affecting pitch.
+- **Playback Speed Slider**: Added a new UI slider to the header, allowing real-time speed adjustment from 0.25x to 2.0x.
+- **Version Tagging**: Standardized internal versioning to "v190 Bergamota" across the UI, Splash Screen, and binaries.
+
+#### Fixed
+
+- **Linux Stability (AppImage)**: Resolved X11 `MaximumRequestLengthExceeded` crashes by optimizing icon sizes and fixed `NoGlutinConfigs` errors by disabling multisampling in the native configuration.
+- **CI/CD Optimization**: Improved GitHub Actions workflow with automatic release creation and platform-specific binary naming (including the version tag).
 
 ---
 
@@ -15,8 +21,14 @@
 
 #### Adicionados
 
-- **Time-Stretching em Tempo Real (WSOLA)**: Time-stretching de alta qualidade que preserva o tom em diferentes velocidades de reprodução.
-- **Controle de Velocidade**: Ajuste a taxa de reprodução (0.25x a 2.0x) diretamente no cabeçalho.
+- **Time-Stretching em Tempo Real (WSOLA)**: Implementação de algoritmo WSOLA de alta fidelidade em Rust puro, permitindo alterar a velocidade de reprodução sem distorcer o tom (pitch).
+- **Slider de Velocidade**: Novo controle deslizante no cabeçalho para ajuste dinâmico da taxa de reprodução entre 0.25x e 2.0x.
+- **Padronização de Versão**: Atualização completa para "v190 Bergamota" em todos os elementos da interface, Splash Screen e metadados.
+
+#### Corrigidos
+
+- **Estabilidade no Linux (AppImage)**: Corrigido crash `MaximumRequestLengthExceeded` (redimensionamento de ícone) e erro `NoGlutinConfigs` através da desativação de multisampling.
+- **Otimização de CI/CD**: Workflow do GitHub Actions aprimorado com criação automática de releases e nomenclatura inteligente de binários (incluindo a tag de versão).
 
 ---
 

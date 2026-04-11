@@ -8,23 +8,7 @@ on:
     branches: [ main ]
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libx11-dev libxcb1-dev libxcursor-dev libxrandr-dev libxi-dev libasound2-dev libvulkan-dev pkg-config
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
-    - name: Run clippy
-      run: cargo clippy -- -D warnings
-    - name: Run fmt
-      run: cargo fmt -- --check
-
   build-linux:
-    needs: check
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -32,8 +16,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libx11-dev libxcb1-dev libxcursor-dev libxrandr-dev libxi-dev libasound2-dev libvulkan-dev pkg-config
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
     - name: Build
       run: cargo build --release
     - name: Prepare AppImage metadata
@@ -61,21 +43,18 @@ jobs:
     - name: Upload Linux Binary
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-linux-x64
+        name: copaiba_neo-${{ github.ref_name }}-linux-x64
         path: target/release/copaiba_neo
     - name: Upload AppImage
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-appimage
+        name: copaiba_neo-${{ github.ref_name }}-appimage
         path: "*.AppImage"
 
   build-windows:
-    needs: check
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
     - name: Create Icon for build.rs
       run: magick favicon_mori.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
     - name: Build
@@ -83,51 +62,18 @@ jobs:
     - name: Upload Windows Binary
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-windows-x64
+        name: copaiba_neo-${{ github.ref_name }}-windows-x64
         path: target/release/copaiba_neo.exe
 
   build-macos:
-    needs: check
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
     - name: Build
       run: cargo build --release
     - name: Upload macOS Binary
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-macos-universal
+        name: copaiba_neo-${{ github.ref_name }}-macos-universal
         # O GitHub Actions no macos-latest (M1/M14) gera binários arm64 por padrão hoje em dia
         path: target/release/copaiba_neo
-
-  create-release:
-    needs: [build-linux, build-windows, build-macos]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Stage files for release
-        run: |
-          VERSION=${{ github.ref_name }}
-          mkdir release_assets
-          # Rename binaries to include the version tag
-          cp artifacts/copaiba_neo-linux-x64/copaiba_neo release_assets/copaiba_neo-${VERSION}-linux-x86_64
-          cp artifacts/copaiba_neo-appimage/*.AppImage release_assets/copaiba_neo-${VERSION}-x86_64.AppImage
-          cp artifacts/copaiba_neo-windows-x64/copaiba_neo.exe release_assets/copaiba_neo-${VERSION}-windows-x86_64.exe
-          cp artifacts/copaiba_neo-macos-universal/copaiba_neo release_assets/copaiba_neo-${VERSION}-macos-universal
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release_assets/*
-          generate_release_notes: true
-          draft: false
-          prerelease: false

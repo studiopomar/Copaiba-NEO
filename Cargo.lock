@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "copaiba_neo"
-version = "0.180.0"
+version = "0.190.0"
 dependencies = [
  "android-activity",
  "android_logger",
