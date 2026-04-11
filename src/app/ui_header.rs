@@ -189,8 +189,14 @@ impl CopaibaApp {
                 // Secondary Row (Volume, Device) - Balanced
                 ui.horizontal(|ui| {
                     ui.add_space(4.0);
-                    ui.label(RichText::new("🔊").size(10.0));
-                    ui.add(egui::Slider::new(&mut self.config.test_volume, 0.0..=1.0).show_value(false).trailing_fill(true));
+                    ui.add_space(8.0);
+                    ui.label(tr!("header.label.playback_speed"));
+                    ui.add(egui::Slider::new(&mut self.audio.playback_speed, 0.1..=2.0).clamping(egui::SliderClamping::Always).suffix("x"));
+                    if ui.button("⟲").clicked() {
+                        self.audio.playback_speed = 1.0;
+                    }
+                    ui.add_space(16.0);
+                    ui.add(egui::Slider::new(&mut self.config.test_volume, 0.0..=1.5).text(tr!("header.label.volume")));
                     
                     ui.add_space(8.0);
                     ui.separator();

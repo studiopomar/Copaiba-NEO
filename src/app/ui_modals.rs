@@ -233,9 +233,9 @@ impl CopaibaApp {
                         .selected_text(format!("{:?}", self.encoding))
                         .show_ui(ui, |ui| {
                             use crate::oto::OtoEncoding;
-                            if ui.selectable_value(&mut self.encoding, OtoEncoding::Utf8, "UTF-8").clicked() { self.load_character_metadata(self.current_tab); }
-                            if ui.selectable_value(&mut self.encoding, OtoEncoding::ShiftJis, "Shift-JIS (Japonês)").clicked() { self.load_character_metadata(self.current_tab); }
-                            if ui.selectable_value(&mut self.encoding, OtoEncoding::Gbk, "GBK (Chinês)").clicked() { self.load_character_metadata(self.current_tab); }
+                            if ui.selectable_value(&mut self.encoding, OtoEncoding::Utf8, "UTF-8").clicked() { self.reload_current_tab_with_encoding(); }
+                            if ui.selectable_value(&mut self.encoding, OtoEncoding::ShiftJis, "Shift-JIS (Japonês)").clicked() { self.reload_current_tab_with_encoding(); }
+                            if ui.selectable_value(&mut self.encoding, OtoEncoding::Gbk, "GBK (Chinês)").clicked() { self.reload_current_tab_with_encoding(); }
                         });
                     ui.separator();
 

@@ -158,6 +158,7 @@ pub struct AudioState {
     pub playback_start: Option<std::time::Instant>,
     pub playback_offset_ms: f64,
     pub playback_limit_ms: Option<f64>,
+    pub playback_speed: f32,
 
     // Recorder
     pub is_recording: bool,
@@ -181,6 +182,7 @@ impl Default for AudioState {
             playback_start: None,
             playback_offset_ms: 0.0,
             playback_limit_ms: None,
+            playback_speed: 1.0,
             is_recording: false,
             recorder_samples: Arc::new(Mutex::new(Vec::new())),
             recorder_stop_signal: Arc::new(AtomicBool::new(false)),

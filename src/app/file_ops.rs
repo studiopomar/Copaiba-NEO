@@ -398,6 +398,27 @@ impl CopaibaApp {
         }
     }
 
+    pub fn reload_current_tab_with_encoding(&mut self) {
+        let path_opt = self.cur().oto_path.clone();
+        if let Some(path) = path_opt {
+            let encoding = self.encoding;
+            match crate::oto::parse_oto_with_encoding(&path, Some(encoding)) {
+                Ok(parsed) => {
+                    let tab = self.cur_mut();
+                    tab.entries = parsed.entries.clone();
+                    tab.original_entries = parsed.entries;
+                    tab.dirty = false;
+                    self.rebuild_filter();
+                    self.load_character_metadata(self.current_tab);
+                    self.ui.toast_manager.success(tr!("file_ops.status.reloaded_with_encoding"));
+                }
+                Err(e) => {
+                    self.ui.toast_manager.error(format!("Error: {e}"));
+                }
+            }
+        }
+    }
+
     pub fn load_oto(&mut self, path: PathBuf) {
         match parse_oto(&path) {
             Ok(parsed) => {

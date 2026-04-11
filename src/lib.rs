@@ -6,6 +6,7 @@ pub mod oto;
 pub mod waveform;
 pub mod spectrogram;
 pub mod plugins;
+pub mod wsola;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;

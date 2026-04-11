@@ -97,9 +97,17 @@ impl CopaibaApp {
                     };
 
                     if end_idx > start_idx {
-                        let samples = wav.samples[start_idx..end_idx].to_vec();
+                        let mut samples = wav.samples[start_idx..end_idx].to_vec();
+
+                        // Apply Time-Stretching if speed != 1.0 using manual WSOLA
+                        let playback_speed = self.audio.playback_speed;
+                        if (playback_speed - 1.0).abs() > 0.01 {
+                            samples = crate::wsola::wsola_stretch(&samples, playback_speed);
+                        }
+
                         let source = rodio::buffer::SamplesBuffer::new(1, wav.sample_rate, samples);
                         sink.append(source);
+                        sink.set_speed(1.0); // Pitch is already preserved by timestretch logic
                         sink.play();
                         self.audio.playback_offset_ms = (start_idx as f64 / wav.sample_rate as f64) * 1000.0;
                         self.audio.playback_limit_ms = if full { None } else { Some((end_idx as f64 / wav.sample_rate as f64) * 1000.0) };
@@ -115,9 +123,17 @@ impl CopaibaApp {
         if let Some(sink) = &self.audio.sink {
             sink.stop();
             sink.set_volume(self.config.test_volume);
-            let samples = (*wav.samples).clone();
+            let mut samples = (*wav.samples).clone();
+
+            // Apply Time-Stretching if speed != 1.0 using manual WSOLA
+            let playback_speed = self.audio.playback_speed;
+            if (playback_speed - 1.0).abs() > 0.01 {
+                samples = crate::wsola::wsola_stretch(&samples, playback_speed);
+            }
+
             let source = rodio::buffer::SamplesBuffer::new(1, wav.sample_rate, samples);
             sink.append(source);
+            sink.set_speed(1.0);
             self.audio.playback_start = Some(std::time::Instant::now());
             self.audio.playback_offset_ms = 0.0;
         }

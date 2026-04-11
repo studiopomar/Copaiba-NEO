@@ -56,18 +56,44 @@ pub struct ParsedOto {
 }
 
 /// Parse an oto.ini file from disk.
-/// Tries UTF-8 first; falls back to Shift-JIS.
+/// Tries to detect encoding (UTF-8 or Shift-JIS) based on success and character validity.
 pub fn parse_oto(path: &Path) -> Result<ParsedOto, String> {
+    parse_oto_with_encoding(path, None)
+}
+
+pub fn parse_oto_with_encoding(path: &Path, force_encoding: Option<OtoEncoding>) -> Result<ParsedOto, String> {
     let bytes = fs::read(path).map_err(|e: std::io::Error| e.to_string())?;
 
-    let (decoded_sjis, _, had_errors_sjis) = encoding_rs::SHIFT_JIS.decode(&bytes);
-    let (text, encoding) = if !had_errors_sjis {
-        (decoded_sjis.into_owned(), OtoEncoding::ShiftJis)
-    } else if std::str::from_utf8(&bytes).is_ok() {
-        (String::from_utf8_lossy(&bytes).into_owned(), OtoEncoding::Utf8)
+    let (text, encoding) = if let Some(forced) = force_encoding {
+        match forced {
+            OtoEncoding::Utf8 => (String::from_utf8_lossy(&bytes).into_owned(), OtoEncoding::Utf8),
+            OtoEncoding::ShiftJis => (encoding_rs::SHIFT_JIS.decode(&bytes).0.into_owned(), OtoEncoding::ShiftJis),
+            OtoEncoding::Gbk => (encoding_rs::GBK.decode(&bytes).0.into_owned(), OtoEncoding::Gbk),
+        }
     } else {
-        let (decoded_gbk, _, _) = encoding_rs::GBK.decode(&bytes);
-        (decoded_gbk.into_owned(), OtoEncoding::Gbk)
+        // Detection logic
+        let (decoded_utf8, had_errors_utf8) = match std::str::from_utf8(&bytes) {
+            Ok(s) => (s.to_string(), false),
+            Err(_) => (String::from_utf8_lossy(&bytes).into_owned(), true),
+        };
+
+        let (decoded_sjis, _, had_errors_sjis) = encoding_rs::SHIFT_JIS.decode(&bytes);
+
+        if !had_errors_utf8 {
+            (decoded_utf8, OtoEncoding::Utf8)
+        } else if !had_errors_sjis {
+            (decoded_sjis.into_owned(), OtoEncoding::ShiftJis)
+        } else {
+            // Both have errors, pick the one with fewer replacement characters
+            let utf8_errors = decoded_utf8.chars().filter(|&c| c == '\u{FFFD}').count();
+            let sjis_errors = decoded_sjis.chars().filter(|&c| c == '\u{FFFD}').count();
+
+            if sjis_errors <= utf8_errors {
+                (decoded_sjis.into_owned(), OtoEncoding::ShiftJis)
+            } else {
+                (decoded_utf8, OtoEncoding::Utf8)
+            }
+        }
     };
 
     let mut entries = Vec::new();

@@ -314,11 +314,9 @@ pub fn draw_waveform(
                 let factor = (raw_y / 150.0).exp() as f32;
                 view.scale_y = (view.scale_y * factor).clamp(0.1, 10.0);
             } else {
-                // Alias navigation: accumulate raw notch values only.
-                // raw_scroll_delta is discrete (~15-30 px per notch on most mice).
-                // Threshold of 40 means 1-2 notches per step, never doubling.
+                // Alias navigation: lower threshold for more responsiveness
                 view.scroll_accum += raw_y;
-                let threshold = 40.0;
+                let threshold = 20.0;
                 if view.scroll_accum > threshold {
                     nav_delta = -1;
                     view.scroll_accum = 0.0;
@@ -328,8 +326,8 @@ pub fn draw_waveform(
                 }
             }
         } else {
-            // Suaviza o reset do scroll_accum para não ser instantâneo e parecer mais natural
-            view.scroll_accum *= 0.8;
+            // Faster reset for a crisper feel
+            view.scroll_accum *= 0.5;
             if view.scroll_accum.abs() < 1.0 { view.scroll_accum = 0.0; }
         }
 
@@ -508,18 +506,18 @@ pub fn draw_waveform(
         let diff_range = (cache.view_range - vr).abs();
         let cur_sd_ptr = std::sync::Arc::as_ptr(&sd.frames_mag) as usize;
         
-        // needs_update: always rebuild when texture is absent, view moved, size
-        // changed, or data changed. The !is_animating guard was removed because
-        // it caused stale textures after navigation: the view snaps immediately
-        // so is_animating may still be true on the first frame, but by the time
-        // it turns false the diff is already 0 and the cache is silently kept.
-        // UV-stretching (below) still gives smooth zoom visuals during animation.
+        // needs_update optimized: Skip texture generation during animations to maintain 60FPS.
+        // We only rebuild if not animating, OR if we don't have a texture at all,
+        // OR if the discrepancy is extremely large (> 50% of range).
+        let discrepancy_start = (cache.view_start - vs).abs();
+        let discrepancy_range = (cache.view_range - vr).abs();
+        
         let needs_update = cache.texture.is_none()
-            || diff_start > 0.5
-            || diff_range > 0.5
+            || cache.data_ptr != cur_sd_ptr
             || cache.width != pw
             || cache.height != ph
-            || cache.data_ptr != cur_sd_ptr;
+            || (!is_animating && (discrepancy_start > 0.5 || discrepancy_range > 0.5))
+            || (discrepancy_start > vr * 0.5 || discrepancy_range > vr * 0.5);
 
 
         let cache_was_rebuilt;
@@ -556,8 +554,7 @@ pub fn draw_waveform(
 
     // ── Draw waveform pixels ──────────────────────────────────────────────
     let s_start = ((view.view_start_ms / 1000.0) * wav.sample_rate as f64) as usize;
-    let s_end   = (((view.view_start_ms + view.view_range_ms) / 1000.0) * wav.sample_rate as f64)
-        .min(wav.samples.len() as f64) as usize;
+    let s_end   = (((view.view_start_ms + view.view_range_ms) / 1000.0) * wav.sample_rate as f64) as usize;
     let px_w = wave_rect.width() as usize;
 
     if px_w > 0 && s_end > s_start {
@@ -596,13 +593,16 @@ pub fn draw_waveform(
             let cur_wav_ptr = std::sync::Arc::as_ptr(&wav.samples) as usize;
             
             let current_cache_scale = view.scale_y * (if wave_settings.visual_normalize { -1.0 } else { 1.0 });
+            // Skip expensive block texture rebuilds during animations
+            let discrepancy_start = (cache.view_start - vs).abs();
+            let discrepancy_range = (cache.view_range - vr).abs();
             let needs_update = cache.texture.is_none()
-                || (cache.view_start - vs).abs() > 0.5
-                || (cache.view_range - vr).abs() > 0.5
-                || (cache.scale_y - current_cache_scale).abs() > 0.01
+                || cache.data_ptr != cur_wav_ptr
                 || cache.width != px_w
                 || cache.height != wave_rect.height() as usize
-                || cache.data_ptr != cur_wav_ptr;
+                || (cache.scale_y - current_cache_scale).abs() > 0.01
+                || (!is_animating && (discrepancy_start > 0.5 || discrepancy_range > 0.5))
+                || (discrepancy_start > vr * 0.5 || discrepancy_range > vr * 0.5);
 
 
             let wave_cache_was_rebuilt;
@@ -619,7 +619,7 @@ pub fn draw_waveform(
                     let s0 = s_start + (px as f64 * step_f64) as usize;
                     let mut s1 = s_start + ((px + 1) as f64 * step_f64) as usize;
                     if s1 <= s0 { s1 = s0 + 1; }
-                    if s0 >= s_end { break; }
+                    if s0 >= wav.samples.len() { break; }
                     let chunk = &wav.samples[s0..s1.min(wav.samples.len())];
                     let (mn, mx) = chunk.iter().fold((0f32, 0f32), |(a, b), &s| (a.min(s), b.max(s)));
                     

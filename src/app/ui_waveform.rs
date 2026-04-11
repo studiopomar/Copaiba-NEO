@@ -34,7 +34,7 @@ impl CopaibaApp {
                 if let Some(wav) = wav_opt {
                     let mut playback_cursor_val = self.audio.playback_start.map(|s| {
                         let elapsed = s.elapsed().as_secs_f64() * 1000.0;
-                        self.audio.playback_offset_ms + elapsed
+                        self.audio.playback_offset_ms + (elapsed * self.audio.playback_speed as f64)
                     });
 
                     if let (Some(cur), Some(limit)) = (playback_cursor_val, self.audio.playback_limit_ms) {

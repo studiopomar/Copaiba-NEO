@@ -10,6 +10,7 @@ btn.apply = Apply
 # Header
 header.voicebank = Voicebank
 header.pitch.label = Pitch:
+header.label.playback_speed = Playback Rate:
 header.resampler.select = Select Resampler
 header.resampler.none = None
 header.resampler.test = Test alias
@@ -283,6 +284,7 @@ file_ops.status.aliases_loaded = aliases loaded.
 file_ops.status.open_error = Error opening:
 file_ops.status.saved_success = Saved successfully.
 file_ops.status.save_error = Error saving:
+file_ops.status.reloaded_with_encoding = Reloaded with current encoding.
 file_ops.label.new_set = New Set
 # State
 state.tab.default_name = New Set
