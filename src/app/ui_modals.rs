@@ -718,7 +718,7 @@ impl CopaibaApp {
                             .corner_radius(10)
                     );
                     ui.add_space(24.0);
-                    ui.heading(RichText::new("Copaiba NEO v180").strong().size(36.0));
+                    ui.heading(RichText::new("Copaiba NEO v190 Bergamota").strong().size(36.0));
                     ui.label(RichText::new("Oto.ini Editor").color(egui::Color32::from_gray(120)));
                     ui.add_space(24.0);
                     

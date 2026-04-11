@@ -46,7 +46,7 @@ pub fn run() -> eframe::Result {
 
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_title("Copaiba NEO v180")
+                .with_title("Copaiba NEO v190 Bergamota")
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([800.0, 500.0])
                 .with_icon(icon_data.unwrap_or_default()),
@@ -55,7 +55,7 @@ pub fn run() -> eframe::Result {
         };
 
         eframe::run_native(
-            "Copaiba NEO v180",
+            "Copaiba NEO v190 Bergamota",
             options,
             Box::new(|cc| {
                 Ok(setup_app_box(cc))
@@ -115,7 +115,7 @@ fn android_main(app: android_activity::AndroidApp) {
     };
 
     eframe::run_native(
-        "Copaiba NEO v180",
+        "Copaiba NEO v190 Bergamota",
         options,
         Box::new(|cc| {
             Ok(setup_app_box(cc))

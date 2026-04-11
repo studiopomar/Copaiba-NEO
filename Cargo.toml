@@ -1,6 +1,6 @@
 [package]
 name = "copaiba_neo"
-version = "0.180.0"
+version = "0.190.0"
 edition = "2021"
 description = "Copaiba NEO — oto.ini editor for UTAU/OpenUTAU"
 license = "MIT"

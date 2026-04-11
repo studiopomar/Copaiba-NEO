@@ -1,6 +1,24 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [v190 Bergamota] - 2026-04-11
+
+### English
+
+#### Added
+
+- **Real-time Time-Stretching (WSOLA)**: High-quality time-stretching that preserves pitch across varying playback speeds.
+- **Playback Speed Slider**: Control playback rate (0.25x to 2.0x) directly from the header.
+
+---
+
+### Português
+
+#### Adicionados
+
+- **Time-Stretching em Tempo Real (WSOLA)**: Time-stretching de alta qualidade que preserva o tom em diferentes velocidades de reprodução.
+- **Controle de Velocidade**: Ajuste a taxa de reprodução (0.25x a 2.0x) diretamente no cabeçalho.
+
+---
 
 ## [v180] - 2026-04-10
 
