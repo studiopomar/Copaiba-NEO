@@ -186,9 +186,45 @@ impl CopaibaApp {
                 ui.add_space(2.0);
                 ui.separator();
 
-                // Secondary Row (Volume, Device) - Balanced
+                // Secondary Row (Volume, Device, Alias guide)
                 ui.horizontal(|ui| {
                     ui.add_space(4.0);
+
+                    // ── Alias Guide ──────────────────────────────────────────
+                    {
+                        let tab = &self.tabs[tab_idx];
+                        let alias = tab.filtered.get(tab.selected)
+                            .and_then(|&idx| tab.entries.get(idx))
+                            .map(|e| e.alias.as_str())
+                            .unwrap_or("");
+
+                        let total = tab.filtered.len();
+                        let pos = if total > 0 { tab.selected.saturating_add(1).min(total) } else { 0 };
+
+                        // Pill background
+                        let alias_text = if alias.is_empty() { "—".to_string() } else { alias.to_string() };
+                        let counter_text = format!("{}/{}", pos, total);
+
+                        ui.add_space(4.0);
+
+                        // Draw a visually distinct "alias pill"
+                        let text = egui::RichText::new(&alias_text)
+                            .strong()
+                            .size(15.0)
+                            .color(Color32::from_rgb(220, 190, 255));
+                        let label = ui.label(text);
+                        label.on_hover_text("Alias atual sendo configurado");
+
+                        ui.add_space(4.0);
+                        ui.label(
+                            egui::RichText::new(&counter_text)
+                                .size(10.0)
+                                .color(ui.visuals().weak_text_color())
+                        );
+                        ui.add_space(8.0);
+                        ui.separator();
+                    }
+
                     ui.add_space(8.0);
                     ui.label(tr!("header.label.playback_speed"));
                     ui.add(egui::Slider::new(&mut self.audio.playback_speed, 0.1..=2.0).clamping(egui::SliderClamping::Always).suffix("x"));

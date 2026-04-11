@@ -502,8 +502,6 @@ pub fn draw_waveform(
         let ph = spec_rect.height().max(1.0) as usize;
 
         let cache = &mut view.spec_cache;
-        let diff_start = (cache.view_start - vs).abs();
-        let diff_range = (cache.view_range - vr).abs();
         let cur_sd_ptr = std::sync::Arc::as_ptr(&sd.frames_mag) as usize;
         
         // needs_update optimized: Skip texture generation during animations to maintain 60FPS.
