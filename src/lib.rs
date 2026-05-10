@@ -47,7 +47,7 @@ pub fn run() -> eframe::Result {
 
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_title("Copaiba NEO v190 Bergamota")
+                .with_title("Copaiba NEO v200 Bergamota")
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([800.0, 500.0])
                 .with_icon(icon_data.unwrap_or_default()),
@@ -56,7 +56,7 @@ pub fn run() -> eframe::Result {
         };
 
         eframe::run_native(
-            "Copaiba NEO v190 Bergamota",
+            "Copaiba NEO v200 Bergamota",
             options,
             Box::new(|cc| {
                 Ok(setup_app_box(cc, args))
@@ -117,7 +117,7 @@ fn android_main(app: android_activity::AndroidApp) {
     };
 
     eframe::run_native(
-        "Copaiba NEO v190 Bergamota",
+        "Copaiba NEO v200 Bergamota",
         options,
         Box::new(|cc| {
             Ok(setup_app_box(cc))
@@ -196,11 +196,7 @@ impl eframe::App for CopaibaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let now = ctx.input(|i| i.time);
         if self.session_start_time == 0.0 { self.session_start_time = now; }
-        if self.ui.show_splash {
-            self.ui.splash_progress += ctx.input(|i| i.stable_dt).min(0.1);
-            if self.ui.splash_progress > 1.6 { self.ui.show_splash = false; }
-            ctx.request_repaint();
-        }
+        // Splash logic removed
         if ctx.input(|i| i.viewport().close_requested()) {
             if self.cur().dirty {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
@@ -222,7 +218,7 @@ impl eframe::App for CopaibaApp {
         self.show_modals(ctx);
         self.show_pmap_editor(ctx);
         self.ui.toast_manager.draw(ctx);
-        if self.audio.playback_start.is_some() || self.ui.show_splash {
+        if self.audio.playback_start.is_some() {
             ctx.request_repaint_after(std::time::Duration::from_millis(32));
         } else {
             ctx.request_repaint_after(std::time::Duration::from_millis(500));

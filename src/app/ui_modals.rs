@@ -8,7 +8,6 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_modals(&mut self, ctx: &egui::Context) {
-        self.show_splash_screen(ctx);
         self.modal_exit_dialog(ctx);
         self.modal_preset_editor(ctx);
         self.modal_settings(ctx);
@@ -125,7 +124,7 @@ impl CopaibaApp {
                             });
                     });
                     ui.checkbox(&mut self.config.play_ui_sounds, tr!("modal.settings.general.ckb.play_ui_sounds"));
-                    
+
                     crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                         ui.label(tr!("modal.settings.general.label.theme")); // I might need to add this translation, but let's use a hardcoded string if not available
                         let old_theme = self.config.theme;
@@ -445,7 +444,7 @@ impl CopaibaApp {
                         }
                     });
                 }
-                
+
                 ui.add_space(8.0);
                 if ui.button(tr!("btn.apply")).clicked() {
                     let selection = if !self.cur().multi_selection.is_empty() {
@@ -457,7 +456,7 @@ impl CopaibaApp {
                     let enabled = self.batch_edit_enabled;
                     let values = self.batch_edit_values;
                     let relative = self.batch_edit_is_relative;
-                    
+
                     self.save_undo_state();
                     let tab = self.cur_mut();
                     for &idx in &selection {
@@ -489,10 +488,10 @@ impl CopaibaApp {
             .show(ctx, |ui| {
                 ui.label(tr!("modal.alias_conv.label.info"));
                 ui.separator();
-                
+
                 ui.radio_value(&mut self.alias_conv_to_hiragana, false, tr!("modal.alias_conv.mode.to_romaji"));
                 ui.radio_value(&mut self.alias_conv_to_hiragana, true, tr!("modal.alias_conv.mode.to_hiragana"));
-                
+
                 ui.add_space(8.0);
                 if ui.button(tr!("btn.convert")).clicked() {
                     let selection = if !self.cur().multi_selection.is_empty() {
@@ -500,7 +499,7 @@ impl CopaibaApp {
                     } else {
                         self.cur().filtered.clone()
                     };
-                    
+
                     let to_hiragana = self.alias_conv_to_hiragana;
                     self.save_undo_state();
                     let tab = self.cur_mut();
@@ -702,14 +701,14 @@ impl CopaibaApp {
 
     fn show_splash_screen(&mut self, ctx: &egui::Context) {
         if !self.ui.show_splash { return; }
-        
+
         egui::Area::new(egui::Id::new("splash"))
             .order(egui::Order::Foreground)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 let screen_rect = ui.ctx().screen_rect();
                 ui.painter().rect_filled(screen_rect, 0.0, egui::Color32::from_rgb(18, 18, 28));
-                
+
                 ui.vertical_centered(|ui| {
                     ui.add_space(screen_rect.height() * 0.3);
                     ui.add(
@@ -718,31 +717,31 @@ impl CopaibaApp {
                             .corner_radius(10)
                     );
                     ui.add_space(24.0);
-                    ui.heading(RichText::new("Copaiba NEO v190 Bergamota").strong().size(36.0));
+                    ui.heading(RichText::new("Copaiba NEO v200 Bergamota").strong().size(36.0));
                     ui.label(RichText::new("Oto.ini Editor").color(egui::Color32::from_gray(120)));
                     ui.add_space(24.0);
-                    
+
                     ui.label(RichText::new("Desenvolvedores / Coders").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
                     ui.label(RichText::new("xiao (@dorayakito)\nHAI-D (@overdramatic)").size(13.0));
                     ui.add_space(12.0);
-                    
+
                     ui.label(RichText::new("Quality Assurance").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
                     ui.label(RichText::new("Zone (@zoneryth)\nMakki (@maezono00)").size(13.0));
                     ui.add_space(12.0);
-                    
+
                     ui.label(RichText::new("Porta-voz nJokis").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
                     ui.label(RichText::new("oneno-ren (@oneno-ren)").size(13.0));
                     ui.add_space(12.0);
 
                     ui.label(RichText::new("Ícone / Favicon").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
                     ui.label(RichText::new("Mori-P (@pingolinhachan.com)").size(13.0));
-                    
+
                     ui.add_space(32.0);
-                    
+
                     let progress = (self.ui.splash_progress / 1.6).clamp(0.0, 1.0);
                     ui.add(egui::ProgressBar::new(progress).desired_width(280.0).animate(true));
                     ui.add_space(8.0);
-                    
+
                     let messages = [
                         "Coletando dados ...",
                         "Carregando dados ...",
@@ -834,7 +833,7 @@ impl CopaibaApp {
     fn modal_auto_oto(&mut self, ctx: &egui::Context) {
         if !self.ui.show_auto_oto { return; }
         let mut open = true;
-        
+
         egui::Window::new(format!("🔬 {}", tr!("modal.auto_oto.window.name")))
             .id(egui::Id::new("auto_oto_modal"))
             .open(&mut open)
@@ -842,7 +841,7 @@ impl CopaibaApp {
             .show(ctx, |ui| {
                 ui.label(tr!("modal.auto_oto.label.desc"));
                 ui.add_space(8.0);
-                
+
                 crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                     ui.label(tr!("modal.auto_oto.label.noise"));
                     ui.add(egui::Slider::new(&mut self.auto_oto_settings.noise_floor_db, -60.0_f32..=-10.0).suffix(" dB"));
@@ -855,7 +854,7 @@ impl CopaibaApp {
                     ui.label(tr!("modal.auto_oto.label.min_silence"));
                     ui.add(egui::Slider::new(&mut self.auto_oto_settings.min_silence_ms, 0.0..=200.0).suffix(" ms"));
                 });
-                
+
                 ui.add_space(16.0);
                 crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                     if ui.button(tr!("modal.auto_oto.btn.apply_selected")).clicked() {
@@ -864,7 +863,7 @@ impl CopaibaApp {
                     }
                 });
             });
-            
+
         self.ui.show_auto_oto = open;
     }
 }

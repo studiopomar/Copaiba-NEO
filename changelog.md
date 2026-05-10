@@ -1,6 +1,6 @@
 # Changelog
 
-## [v190 Bergamota] - 2026-04-11
+## [v200 Bergamota] - 2026-05-10
 
 ### English
 
@@ -8,7 +8,7 @@
 
 - **Real-time Time-Stretching (WSOLA)**: Implemented high-quality, pure Rust WSOLA (Waveform Similarity Overlap-Add) for smooth playback at different speeds without affecting pitch.
 - **Playback Speed Slider**: Added a new UI slider to the header, allowing real-time speed adjustment from 0.25x to 2.0x.
-- **Version Tagging**: Standardized internal versioning to "v190 Bergamota" across the UI, Splash Screen, and binaries.
+- **Version Tagging**: Standardized internal versioning to "v200 Bergamota" across the UI, Splash Screen, and binaries.
 
 #### Fixed
 
@@ -23,7 +23,7 @@
 
 - **Time-Stretching em Tempo Real (WSOLA)**: Implementação de algoritmo WSOLA de alta fidelidade em Rust puro, permitindo alterar a velocidade de reprodução sem distorcer o tom (pitch).
 - **Slider de Velocidade**: Novo controle deslizante no cabeçalho para ajuste dinâmico da taxa de reprodução entre 0.25x e 2.0x.
-- **Padronização de Versão**: Atualização completa para "v190 Bergamota" em todos os elementos da interface, Splash Screen e metadados.
+- **Padronização de Versão**: Atualização completa para "v200 Bergamota" em todos os elementos da interface, Splash Screen e metadados.
 
 #### Corrigidos
 

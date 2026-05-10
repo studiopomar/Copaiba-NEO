@@ -298,7 +298,7 @@ impl Default for UiState {
             show_recorder: false,
             show_home: true,
             key_sound_idx: 0,
-            show_splash: true,
+            show_splash: false,
             splash_progress: 0.0,
             show_readme: false,
             show_license: false,

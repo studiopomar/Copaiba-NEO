@@ -887,26 +887,7 @@ pub fn draw_waveform(
         );
     }
 
-    // ── Interaction: Loading Bar ──────────────────────────────────────────
-    if is_animating {
-        let bar_y = wave_outer_rect.top() + 1.0;
-        let bar_h = 2.5;
-        let color = Color32::from_rgb(137, 180, 250); // Catppuccin Blue
-        
-        let t = (ui.input(|i| i.time) * 2.0).fract() as f32;
-        let w = wave_outer_rect.width();
-        let x0 = wave_outer_rect.left() + (t - 0.2).max(0.0) * w;
-        let x1 = wave_outer_rect.left() + (t + 0.2).min(1.0) * w;
-        
-        painter.line_segment(
-            [Pos2::new(wave_outer_rect.left(), bar_y), Pos2::new(wave_outer_rect.right(), bar_y)],
-            Stroke::new(1.0, color.gamma_multiply(0.2))
-        );
-        painter.line_segment(
-            [Pos2::new(x0, bar_y), Pos2::new(x1, bar_y)],
-            Stroke::new(bar_h, color)
-        );
-    }
+    // Loading bar removed
 
     // ── Playback Cursor (Dotted Yellow Line) ─────────────────────────────
     if let Some(cursor_ms) = playback_cursor {
