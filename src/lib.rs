@@ -125,7 +125,7 @@ fn android_main(app: android_activity::AndroidApp) {
     };
 
     eframe::run_native(
-        "Copaiba NEO v200 Bergamota",
+        "Copaiba NEO v201 Carambola",
         options,
         Box::new(|cc| {
             Ok(setup_app_box(cc))

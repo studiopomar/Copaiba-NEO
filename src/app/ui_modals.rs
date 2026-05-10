@@ -141,6 +141,7 @@ impl CopaibaApp {
                             crate::apply_theme(ctx, self.config.theme);
                         }
                     });
+                    ui.checkbox(&mut self.config.table_on_right, "Tabela de parâmetros no lado direito");
                     ui.separator();
 
                     ui.heading(format!("🎬 {}", tr!("modal.settings.waveform.heading")));

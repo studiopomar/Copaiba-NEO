@@ -336,6 +336,7 @@ pub struct AppConfig {
     pub recent_voicebanks: Vec<RecentVoicebank>,
     pub play_ui_sounds: bool,
     pub theme: AppTheme,
+    pub table_on_right: bool,
 }
 
 impl Default for AppConfig {
@@ -367,6 +368,7 @@ impl Default for AppConfig {
             recent_voicebanks: Vec::new(),
             play_ui_sounds: true,
             theme: AppTheme::Dark,
+            table_on_right: false,
         }
     }
 }

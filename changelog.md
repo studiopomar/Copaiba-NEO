@@ -1,6 +1,66 @@
 # Changelog
 
-## [v200 Bergamota] - 2026-05-10
+## [v201 Carambola] - 2026-05-10
+
+### English
+
+#### Added
+
+- **Automatic Update System**: Integrated GitHub Release checking. The app now notifies users of new versions and provides a direct download option.
+- **Improved OpenUtau Integration**:
+  - Full UTF-8 support for plugin files, ensuring special characters and phonemes are read correctly.
+  - Automatic Piano Roll filtering: when opening via plugin, the app automatically filters and displays only the phonemes present in the OpenUtau sequence.
+- **New Workspace Layout**: Reorganized the interface for a cleaner look.
+  - Moved the **Parameters Window (Alias Table)** to the left side for a more natural editing flow.
+  - Redesigned the **Header** into a functional 2/3 row system to avoid overlap and maximize workspace.
+- **Workflow Utilities**:
+  - **Cache Cleaner (Broom Icon)**: Added a tool to recursively delete resampler cache folders (`cache/` and `.cache/`) within the voicebank directory.
+  - **Real-time Stats**: Displaying sample rate (Hz), duration (ms), and overall voicebank progress (Done/Total %) in the UI.
+  - **Batch Edit Deltas**: When multiple items are selected, dragging a value now applies the same *delta* to all selected entries.
+- **Global Shortcuts**: Enabled `Ctrl+D` (Delete) and `Ctrl+I` (Duplicate) to work globally, even when input fields are focused.
+
+#### Changed
+
+- **Interface Cleanup**: Removed the "Auto-Oto" (WIP) buttons and checkboxes from the main UI to reduce clutter.
+- **Standardized Versioning**: Updated all branding to "v201 Carambola".
+
+#### Fixed
+
+- **UI Overlap**: Fixed button collisions in the header by implementing a responsive multi-row layout.
+- **Plugin Encoding**: Resolved issues with Mojibake (corrupted characters) when importing from OpenUtau.
+
+---
+
+### Português
+
+#### Adicionados
+
+- **Sistema de Update Automático**: Integração com GitHub Releases. O software agora avisa sobre novas versões e oferece download direto.
+- **Integração OpenUtau Aprimorada**:
+  - Suporte completo a UTF-8 para arquivos de plugin, garantindo que fonemas e caracteres especiais sejam lidos corretamente.
+  - Filtragem automática do Piano Roll: ao abrir via plugin, o app filtra e exibe apenas os fonemas presentes na sequência do OpenUtau.
+- **Novo Layout de Espaço de Trabalho**: Interface reorganizada para uma visualização mais agradável.
+  - Janela de **Parâmetros (Tabela de Alias)** movida para o lado esquerdo para um fluxo de edição mais natural.
+  - **Cabeçalho Redesenhado** em um sistema de 2/3 linhas para evitar sobreposição de botões.
+- **Utilidades de Workflow**:
+  - **Limpeza de Cache (Ícone da Vassoura)**: Nova ferramenta para deletar pastas de cache do resampler (`cache/` e `.cache/`) recursivamente no diretório do voicebank.
+  - **Estatísticas em Tempo Real**: Exibição de taxa de amostragem (Hz), duração (ms) e progresso total do voicebank (% concluído) na interface.
+  - **Edição em Lote por Delta**: Ao selecionar múltiplos itens, arrastar um valor agora aplica o mesmo *delta* (diferença) a todos os itens selecionados.
+- **Atalhos Globais**: `Ctrl+D` (Deletar) e `Ctrl+I` (Duplicar) agora funcionam globalmente, mesmo com foco em campos de texto.
+
+#### Alterados
+
+- **Limpeza de Interface**: Removidos botões e checkboxes de "Auto-Oto" (WIP) da interface principal para reduzir poluição visual.
+- **Padronização de Versão**: Atualização completa de marca para "v201 Carambola".
+
+#### Corrigidos
+
+- **Sobreposição de UI**: Corrigida colisão de botões no cabeçalho através de um layout responsivo de múltiplas linhas.
+- **Encoding de Plugins**: Resolvidos problemas de Mojibake (caracteres corrompidos) na importação de arquivos do OpenUtau.
+
+---
+
+## [v190 Bergamota] - 2026-05-10
 
 ### English
 

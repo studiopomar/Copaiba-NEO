@@ -4,20 +4,30 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_alias_table(&mut self, ctx: &egui::Context) {
-        egui::SidePanel::left("alias_sidebar")
-            .resizable(true)
+        let side = if self.config.table_on_right { egui::SidePanel::right("alias_sidebar") } else { egui::SidePanel::left("alias_sidebar") };
+        side.resizable(true)
             .default_width(420.0)
             .min_width(200.0)
             .show(ctx, |ui| {
                 let mut play_sound = false;
+                let mut flip_side = false;
                 let (current_sel, current_focus_col, multi_sel, filtered) = {
                     let tab = self.cur_mut();
                     ui.horizontal(|ui| {
                         ui.strong(format!("{} ({}/{})", tr!("table.params"), tab.filtered.len(), tab.entries.len()));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.button("⇄").on_hover_text("Trocar lado da janela").clicked() {
+                                flip_side = true;
+                            }
+                        });
                     });
                     ui.separator();
                     (tab.selected, tab.focus_col, tab.multi_selection.clone(), tab.filtered.clone())
                 };
+
+                if flip_side {
+                    self.config.table_on_right = !self.config.table_on_right;
+                }
 
                 let mut new_sel = None;
                 let panel_width = ui.available_width();

@@ -18,7 +18,7 @@ header.resampler.hover = Configure a resampler before testing!
 header.resampler.status = Configure a resampler first!
 header.resampler.clear_cache = Clear Cache
 # Home
-home.title = Copaiba NEO v200 Bergamota
+home.title = Copaiba NEO v201 Carambola
 home.subtitle = oto.ini Editor
 home.btn.open_voicebank = Open Voicebank
 home.label.recent = Recent
