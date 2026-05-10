@@ -118,7 +118,13 @@ fn parse_ust_plugin(path: &Path) -> Result<UstPluginData, String> {
             match current_section.as_str() {
                 "[#SETTING]" => {
                     if key == "voicedir" {
-                        data.voice_dir = Some(PathBuf::from(val));
+                        let mut vdir = PathBuf::from(val);
+                        if vdir.is_relative() {
+                            if let Some(parent) = path.parent() {
+                                vdir = parent.join(vdir);
+                            }
+                        }
+                        data.voice_dir = Some(vdir);
                     }
                 }
                 _ if current_section.starts_with("[#") => {
