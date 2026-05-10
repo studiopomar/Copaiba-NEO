@@ -78,16 +78,18 @@ impl CopaibaApp {
             .resizable(false)
             .show(ctx, |ui| {
                 egui::Grid::new("preset_grid").striped(true).show(ui, |ui| {
-                    ui.heading(tr!("modal.preset.grid.shortcut")); ui.heading(tr!("modal.preset.grid.name")); ui.heading(tr!("modal.preset.grid.consonant"));
-                    ui.heading(tr!("modal.preset.grid.cutoff")); ui.heading(tr!("modal.preset.grid.preutter")); ui.heading(tr!("modal.preset.grid.overlap"));
+                    ui.heading(tr!("modal.preset.grid.shortcut")); ui.heading(tr!("modal.preset.grid.name"));
+                    ui.heading("Offset"); ui.heading(tr!("modal.preset.grid.overlap")); ui.heading(tr!("modal.preset.grid.preutter"));
+                    ui.heading(tr!("modal.preset.grid.consonant")); ui.heading(tr!("modal.preset.grid.cutoff"));
                     ui.end_row();
                     for (i, preset) in self.presets.iter_mut().enumerate() {
                         ui.label(format!("Ctrl+{}", i + 1));
                         ui.add(egui::TextEdit::singleline(&mut preset.name).desired_width(50.0));
+                        ui.add(egui::DragValue::new(&mut preset.offset).speed(1.0));
+                        ui.add(egui::DragValue::new(&mut preset.overlap).speed(1.0));
+                        ui.add(egui::DragValue::new(&mut preset.preutter).speed(1.0));
                         ui.add(egui::DragValue::new(&mut preset.consonant).speed(1.0));
                         ui.add(egui::DragValue::new(&mut preset.cutoff).speed(1.0));
-                        ui.add(egui::DragValue::new(&mut preset.preutter).speed(1.0));
-                        ui.add(egui::DragValue::new(&mut preset.overlap).speed(1.0));
                         ui.end_row();
                     }
                 });
@@ -434,7 +436,7 @@ impl CopaibaApp {
                 });
                 ui.add_space(8.0);
 
-                let labels = ["Offset", "Preutterance", "Overlap", "Consonant", "Cutoff"];
+                let labels = ["Offset", "Overlap", "Preutterance", "Consonant", "Cutoff"];
                 for i in 0..5 {
                     crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                         ui.checkbox(&mut self.batch_edit_enabled[i], labels[i]);
@@ -462,8 +464,8 @@ impl CopaibaApp {
                     for &idx in &selection {
                         if let Some(entry) = tab.entries.get_mut(idx) {
                             if enabled[0] { if relative { entry.offset += values[0]; } else { entry.offset = values[0]; } }
-                            if enabled[1] { if relative { entry.preutter += values[1]; } else { entry.preutter = values[1]; } }
-                            if enabled[2] { if relative { entry.overlap += values[2]; } else { entry.overlap = values[2]; } }
+                            if enabled[1] { if relative { entry.overlap += values[1]; } else { entry.overlap = values[1]; } }
+                            if enabled[2] { if relative { entry.preutter += values[2]; } else { entry.preutter = values[2]; } }
                             if enabled[3] { if relative { entry.consonant += values[3]; } else { entry.consonant = values[3]; } }
                             if enabled[4] { if relative { entry.cutoff += values[4]; } else { entry.cutoff = values[4]; } }
                             entry.offset = entry.offset.max(0.0);

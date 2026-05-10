@@ -16,6 +16,7 @@ header.resampler.none = Nenhum
 header.resampler.test = Testar alias
 header.resampler.hover = Configure um resampler antes de testar!
 header.resampler.status = Configure um resampler primeiro!
+header.resampler.clear_cache = Limpar Cache
 # Home
 home.title = Copaiba NEO v200 Bergamota
 home.subtitle = Editor de oto.ini
@@ -279,6 +280,9 @@ audio.resampler.status.success = Resample OK:
 audio.resampler.status.load_error = Erro ao carregar resampler:
 audio.resampler.status.error = Resampler erro:
 audio.resampler.status.exec_error = Erro ao executar resampler:
+audio.resampler.status.cache_cleared = Cache limpo
+audio.resampler.status.cache_not_found = Pasta cache/ não encontrada
+audio.resampler.status.cache_error = Erro ao limpar cache/
 # File Ops
 file_ops.status.aliases_loaded = aliases carregados.
 file_ops.status.open_error = Erro ao abrir:

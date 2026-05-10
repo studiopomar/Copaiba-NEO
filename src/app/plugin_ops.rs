@@ -58,21 +58,34 @@ impl CopaibaApp {
                         if !data.lyrics.is_empty() {
                             let mut target_indices = Vec::new();
                             {
-                                let tab = self.cur();
+                                let tab = self.cur_mut();
+                                // Automatically set filter to show these lyrics
+                                tab.filter = data.lyrics.join(" ");
+                                
                                 for lyric in &data.lyrics {
-                                    // Find first match for each lyric
-                                    if let Some(idx) = tab.entries.iter().position(|e| &e.alias == lyric) {
+                                    let lyric_lower = lyric.trim().to_lowercase();
+                                    // Find match (case-insensitive and trimmed)
+                                    if let Some(idx) = tab.entries.iter().position(|e| e.alias.trim().to_lowercase() == lyric_lower) {
                                         target_indices.push(idx);
                                     }
                                 }
                             }
+                            
+                            self.rebuild_filter();
 
                             if !target_indices.is_empty() {
                                 let tab = self.cur_mut();
-                                tab.selected = target_indices[0];
+                                // If the first target index is now in a different position in the filtered list, find it
+                                let first_raw_idx = target_indices[0];
+                                if let Some(fi) = tab.filtered.iter().position(|&i| i == first_raw_idx) {
+                                    tab.selected = fi;
+                                }
+                                
                                 tab.multi_selection.clear();
                                 for &idx in &target_indices {
-                                    tab.multi_selection.insert(idx);
+                                    if let Some(fi) = tab.filtered.iter().position(|&i| i == idx) {
+                                        tab.multi_selection.insert(fi);
+                                    }
                                 }
                                 self.ensure_wav_loaded();
                             } else {
@@ -96,8 +109,13 @@ impl CopaibaApp {
 fn parse_ust_plugin(path: &Path) -> Result<UstPluginData, String> {
     let bytes = std::fs::read(path).map_err(|e| format!("Falha ao ler arquivo: {}", e))?;
     
-    // OpenUtau usually exports in Shift-JIS for classic plugins
-    let (content, _, _) = encoding_rs::SHIFT_JIS.decode(&bytes);
+    // Try UTF-8 first, fallback to Shift-JIS
+    let content = if let Ok(s) = String::from_utf8(bytes.clone()) {
+        s
+    } else {
+        let (decoded, _, _) = encoding_rs::SHIFT_JIS.decode(&bytes);
+        decoded.into_owned()
+    };
     
     let mut data = UstPluginData::default();
     let mut current_section = String::new();

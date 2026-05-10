@@ -30,6 +30,11 @@ impl CopaibaApp {
                     (24.0, 90.0, 80.0, 55.0)
                 };
 
+                // Track batch delta edits: (field_index, delta)
+                // field_index: 0=offset, 1=overlap, 2=preutter, 3=consonant, 4=cutoff
+                let mut batch_delta: Option<(usize, f64)> = None;
+                let has_multi = multi_sel.len() > 1;
+
                 egui::ScrollArea::vertical().id_salt("alias_vscroll").show(ui, |ui| {
                     TableBuilder::new(ui)
                         .striped(true)
@@ -93,35 +98,53 @@ impl CopaibaApp {
                                         if resp.clicked() { new_sel = Some(fi); tab.focus_col = 2; }
                                     });
 
-                                    macro_rules! num_col {
-                                        ($ui:expr, $val:expr, $col_idx:expr) => {
+                                    // Macro for numeric columns with multi-edit delta tracking
+                                    macro_rules! num_col_multi {
+                                        ($ui:expr, $val:expr, $col_idx:expr, $field_idx:expr) => {
                                             let id = egui::Id::new(("cell", fi, $col_idx));
+                                            let old_val = *$val;
                                             let ir = $ui.push_id(id, |ui| ui.add(egui::DragValue::new($val).speed(1.0)));
-                                            if ir.response.changed() { 
-                                                tab.dirty = true; 
+                                            if ir.response.changed() {
+                                                let delta = *$val - old_val;
+                                                tab.dirty = true;
                                                 play_sound = true;
+                                                if has_multi && in_multi {
+                                                    batch_delta = Some(($field_idx, delta));
+                                                }
                                             }
                                             if ir.response.clicked() { new_sel = Some(fi); tab.focus_col = $col_idx; }
                                         }
                                     }
 
-                                    row.col(|ui| { num_col!(ui, &mut entry.offset, 3); });
-                                    row.col(|ui| { num_col!(ui, &mut entry.overlap, 4); });
-                                    row.col(|ui| { num_col!(ui, &mut entry.preutter, 5); });
-                                    row.col(|ui| { num_col!(ui, &mut entry.consonant, 6); });
-                                    row.col(|ui| {
-                                        let id = egui::Id::new(("cell", fi, 7));
-                                        let ir = ui.push_id(id, |ui| ui.add(egui::DragValue::new(&mut entry.cutoff).speed(1.0)));
-                                        if ir.response.changed() { 
-                                            tab.dirty = true; 
-                                            play_sound = true;
-                                        }
-                                        if ir.response.clicked() { new_sel = Some(fi); tab.focus_col = 7; }
-                                    });
+                                    row.col(|ui| { num_col_multi!(ui, &mut entry.offset, 3, 0); });
+                                    row.col(|ui| { num_col_multi!(ui, &mut entry.overlap, 4, 1); });
+                                    row.col(|ui| { num_col_multi!(ui, &mut entry.preutter, 5, 2); });
+                                    row.col(|ui| { num_col_multi!(ui, &mut entry.consonant, 6, 3); });
+                                    row.col(|ui| { num_col_multi!(ui, &mut entry.cutoff, 7, 4); });
                                 }
                             });
                         });
                 });
+
+                // Apply batch delta to all other selected entries
+                if let Some((field_idx, delta)) = batch_delta {
+                    let tab = self.cur_mut();
+                    for &fi in &multi_sel {
+                        if let Some(&idx) = filtered.get(fi) {
+                            if let Some(entry) = tab.entries.get_mut(idx) {
+                                match field_idx {
+                                    0 => entry.offset += delta,
+                                    1 => entry.overlap += delta,
+                                    2 => entry.preutter += delta,
+                                    3 => entry.consonant += delta,
+                                    4 => entry.cutoff += delta,
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                    tab.dirty = true;
+                }
 
                 if let Some(fi) = new_sel {
                     let ctrl = ctx.input(|i| i.modifiers.ctrl);

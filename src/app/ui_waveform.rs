@@ -298,7 +298,7 @@ impl CopaibaApp {
         }
 
         // Delete selection
-        if ctrl && ctx.input(|i| i.key_pressed(egui::Key::D)) && ctx.memory(|m| m.focused().is_none()) {
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::D)) {
             let to_del = {
                 let tab = self.cur();
                 let mut td: Vec<usize> = tab.multi_selection.iter()
@@ -322,7 +322,7 @@ impl CopaibaApp {
         }
 
         // Duplicate entry
-        if ctrl && ctx.input(|i| i.key_pressed(egui::Key::I)) && ctx.memory(|m| m.focused().is_none()) {
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::I)) {
             let idx = { let tab = self.cur(); tab.filtered.get(tab.selected).copied() };
             if let Some(idx) = idx {
                 self.save_undo_state();

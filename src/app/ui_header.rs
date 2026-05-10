@@ -142,6 +142,10 @@ impl CopaibaApp {
                         if ui.add(test_btn).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                             if has_resampler { self.resample_current(); }
                         }
+
+                        if ui.button(RichText::new(format!("🧹 {}", tr!("header.resampler.clear_cache"))).size(10.0)).clicked() {
+                            self.clear_resampler_cache();
+                        }
                         
                         ui.add(egui::DragValue::new(&mut self.config.test_duration_ms).suffix("ms").range(50.0..=2000.0));
                         ui.separator();

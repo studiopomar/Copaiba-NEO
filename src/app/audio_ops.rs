@@ -256,4 +256,24 @@ impl CopaibaApp {
             }
         }
     }
+
+    pub fn clear_resampler_cache(&mut self) {
+        let tab = self.cur();
+        if let Some(dir) = &tab.oto_dir {
+            let mut cleared = false;
+            for name in &["cache", ".cache"] {
+                let cache_dir = dir.join(name);
+                if cache_dir.exists() && cache_dir.is_dir() {
+                    if let Ok(_) = std::fs::remove_dir_all(&cache_dir) {
+                        cleared = true;
+                    }
+                }
+            }
+            if cleared {
+                self.log(tr!("audio.resampler.status.cache_cleared"), egui::Color32::GREEN);
+            } else {
+                self.log(tr!("audio.resampler.status.cache_not_found"), egui::Color32::YELLOW);
+            }
+        }
+    }
 }
