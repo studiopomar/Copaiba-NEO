@@ -206,13 +206,19 @@ impl eframe::App for CopaibaApp {
         self.handle_shortcuts(ctx);
         self.show_menu_bar(ctx);
         self.show_status_bar(ctx, now);
+
         if self.ui.show_home {
             self.show_home_screen(ctx);
         } else {
+            // First, panels that take precedence or side space
+            self.show_alias_table(ctx); // SidePanel::right
+            self.show_tools_panel(ctx); // TopBottomPanel::bottom
+
+            // Then, top-level navigation and headers
             self.show_tab_bar(ctx);
             self.show_voicebank_header(ctx);
-            self.show_alias_table(ctx);
-            self.show_tools_panel(ctx);
+
+            // Finally, the central workspace
             self.show_waveform_panel(ctx);
         }
         self.show_modals(ctx);
