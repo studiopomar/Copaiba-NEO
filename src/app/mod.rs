@@ -14,6 +14,7 @@ pub mod ui_pmap_editor;
 pub mod recorder;
 pub mod ui_recorder;
 pub mod ui_home;
+pub mod plugin_ops;
 
 pub mod phonetic;
 pub mod pitch;

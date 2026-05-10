@@ -20,6 +20,7 @@ use app::bidi;
 use wasm_bindgen::JsCast;
 
 pub fn run() -> eframe::Result {
+    let args: Vec<String> = std::env::args().collect();
     // Load translations
     let _ = egui_i18n::load_translations_from_text("en-US", include_str!("assets/en-US.egl"));
     let _ = egui_i18n::load_translations_from_text("pt-BR", include_str!("assets/pt-BR.egl"));
@@ -58,7 +59,7 @@ pub fn run() -> eframe::Result {
             "Copaiba NEO v190 Bergamota",
             options,
             Box::new(|cc| {
-                Ok(setup_app_box(cc))
+                Ok(setup_app_box(cc, args))
             }),
         )
     }
@@ -86,10 +87,11 @@ pub fn run() -> eframe::Result {
     }
 }
 
-fn setup_app_box(cc: &eframe::CreationContext<'_>) -> Box<dyn eframe::App> {
+fn setup_app_box(cc: &eframe::CreationContext<'_>, args: Vec<String>) -> Box<dyn eframe::App> {
     egui_extras::install_image_loaders(&cc.egui_ctx);
     let mut app = CopaibaApp::default();
     app.load_prefs();
+    app.handle_cli_args(args);
     apply_theme(&cc.egui_ctx, app.config.theme);
     let lang = app.config.language.clone();
     app.set_language(&lang);
