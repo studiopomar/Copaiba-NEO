@@ -4,7 +4,7 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_alias_table(&mut self, ctx: &egui::Context) {
-        egui::SidePanel::right("alias_sidebar")
+        egui::SidePanel::left("alias_sidebar")
             .resizable(true)
             .default_width(420.0)
             .min_width(200.0)

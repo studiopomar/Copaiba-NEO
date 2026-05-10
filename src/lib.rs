@@ -47,7 +47,7 @@ pub fn run() -> eframe::Result {
 
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_title("Copaiba NEO v200 Bergamota")
+                .with_title("Copaiba NEO v201 Carambola")
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([800.0, 500.0])
                 .with_icon(icon_data.unwrap_or_default()),
@@ -56,7 +56,7 @@ pub fn run() -> eframe::Result {
         };
 
         eframe::run_native(
-            "Copaiba NEO v200 Bergamota",
+            "Copaiba NEO v201 Carambola",
             options,
             Box::new(|cc| {
                 Ok(setup_app_box(cc, args))
@@ -95,6 +95,14 @@ fn setup_app_box(cc: &eframe::CreationContext<'_>, args: Vec<String>) -> Box<dyn
     apply_theme(&cc.egui_ctx, app.config.theme);
     let lang = app.config.language.clone();
     app.set_language(&lang);
+
+    // Trigger update check
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let ver = env!("CARGO_PKG_VERSION").to_string();
+        let result_arc = app.ui.update_available.clone();
+        app::updater::spawn_update_check(ver, result_arc);
+    }
 
     if app.tabs.len() == 1 && (app.tabs[0].name.is_empty() || app.tabs[0].name == "Novo Set") {
         app.tabs[0].name = egui_i18n::tr!("state.tab.default_name").to_string();

@@ -28,14 +28,14 @@ impl CopaibaApp {
         }
 
         egui::TopBottomPanel::top("voicebank_header").resizable(false).show(ctx, |ui| {
-            let (char_tex, char_name, oto_dir, license, readme_path, root_path) = {
+            let (char_tex, char_name, oto_dir, license, readme_path, _root_path) = {
                 let tab = &self.tabs[tab_idx];
                 (tab.character_texture.as_ref().map(|t| t.id()), tab.character_name.clone(), tab.oto_dir.clone(), tab.license_text.clone(), tab.readme_path.clone(), tab.root_path.clone())
             };
 
-            ui.add_space(2.0);
+            ui.add_space(4.0);
             ui.vertical(|ui| {
-                // Primary Row
+                // ── ROW 1: Character Info & Global Actions ─────────────────────
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
 
@@ -47,18 +47,15 @@ impl CopaibaApp {
                         }
                     }
 
-                    // Character Image (60x60)
-                    let (rect, _resp) = ui.allocate_at_least(Vec2::new(60.0, 60.0), egui::Sense::hover());
+                    // Character Image (40x40 - more compact)
+                    let (rect, _resp) = ui.allocate_at_least(Vec2::new(40.0, 40.0), egui::Sense::hover());
                     if let Some(tex_id) = char_tex {
                         ui.painter().image(tex_id, rect, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), Color32::WHITE);
                     } else {
-                        ui.painter().rect_filled(rect, 8.0, Color32::from_rgb(30, 30, 46));
-                        ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, "👤", egui::FontId::proportional(28.0), Color32::GRAY);
+                        ui.painter().rect_filled(rect, 4.0, Color32::from_rgb(30, 30, 46));
+                        ui.painter().text(rect.center(), egui::Align2::CENTER_CENTER, "👤", egui::FontId::proportional(20.0), Color32::GRAY);
                     }
 
-                    ui.add_space(8.0);
-
-                    // Character Info + Readme Buttons
                     ui.vertical(|ui| {
                         let name = if char_name.is_empty() {
                             oto_dir.as_ref()
@@ -68,60 +65,68 @@ impl CopaibaApp {
                         } else { 
                             char_name
                         };
-                        ui.label(RichText::new(name).strong().size(14.0));
+                        ui.label(RichText::new(name).strong().size(13.0));
                         let path_str = oto_dir.as_ref().map(|p: &std::path::PathBuf| p.to_string_lossy().to_string()).unwrap_or_default();
-                        ui.label(RichText::new(&path_str).color(ui.visuals().weak_text_color()).size(10.0))
+                        ui.label(RichText::new(&path_str).color(ui.visuals().weak_text_color()).size(9.0))
                             .on_hover_text(path_str);
-
-                        ui.horizontal(|ui| {
-                            if readme_path.is_some() {
-                                if ui.button(RichText::new("📄 Readme").size(9.0)).clicked() {
-                                    self.ui.show_readme = true;
-                                }
-                            } else if root_path.is_some() {
-                                if ui.button(RichText::new("➕ Readme").size(9.0)).clicked() {
-                                    let root = root_path.as_ref().unwrap();
-                                    let new_path = root.join("readme.txt");
-                                    if std::fs::write(&new_path, "...\n").is_ok() {
-                                        let tab = &mut self.tabs[tab_idx];
-                                        tab.readme_path = Some(new_path);
-                                        tab.readme_text = "...\n".to_string();
-                                        tab.original_readme_text = "...\n".to_string();
-                                    }
-                                }
-                            }
-                            if !license.is_empty() {
-                                if ui.button(RichText::new("⚖ License").size(9.0).color(Color32::from_rgb(150, 200, 150))).clicked() {
-                                    self.ui.show_license = true;
-                                }
-                            }
-                        });
                     });
 
-                    ui.add_space(12.0);
-                    ui.separator();
-                    ui.add_space(12.0);
+                    ui.add_space(8.0);
+                    
+                    // QUICK ACTIONS (Less intrusive)
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 2.0;
+                        if ui.add(egui::Button::new("💾").small()).on_hover_text(tr!("menu.file.save")).clicked() {
+                            self.save_oto();
+                        }
+                        if ui.add(egui::Button::new("⮪").small()).on_hover_text(tr!("menu.edit.undo")).clicked() {
+                            self.undo(ctx);
+                        }
+                        if ui.add(egui::Button::new("⮫").small()).on_hover_text(tr!("menu.edit.redo")).clicked() {
+                            self.redo(ctx);
+                        }
+                        if ui.add(egui::Button::new("🔄").small()).on_hover_text("Recarregar").clicked() {
+                            if let Some(path) = self.cur().oto_path.clone() { self.load_oto(path); }
+                        }
+                    });
 
-                    // Alias Search / Filter
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if oto_dir.is_some() {
+                            if ui.add(egui::Button::new(RichText::new("📂 Abrir Pasta").size(10.0))).clicked() {
+                                self.open_voicebank_dir();
+                            }
+                        }
+                        if readme_path.is_some() {
+                            if ui.button(RichText::new("📄 Readme").size(10.0)).clicked() {
+                                self.ui.show_readme = true;
+                            }
+                        }
+                    });
+                });
+
+                ui.add_space(2.0);
+                ui.separator();
+                ui.add_space(2.0);
+
+                // ── ROW 2: Search, Utilities & Resampler ──────────────────────
+                ui.horizontal(|ui| {
+                    ui.add_space(4.0);
+                    // Search
                     let filter_changed = {
                         let tab = &mut self.tabs[tab_idx];
                         let mut changed = false;
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("🔍").size(10.0).color(Color32::from_rgb(180, 180, 200)));
-                            let resp = ui.add(egui::TextEdit::singleline(&mut tab.filter)
-                                .hint_text(tr!("table.filter.hint"))
-                                .desired_width(180.0)
-                                .margin(egui::Margin::same(4))
-                            );
-                            if resp.changed() { changed = true; }
-                            
-                            if !tab.filter.is_empty() {
-                                if ui.button(RichText::new("✖").size(10.0).color(Color32::from_rgb(255, 100, 100))).on_hover_text("Clear filter").clicked() {
-                                    tab.filter.clear();
-                                    changed = true;
-                                }
+                        ui.label(RichText::new("🔍").size(11.0).color(Color32::from_rgb(180, 180, 200)));
+                        let resp = ui.add(egui::TextEdit::singleline(&mut tab.filter)
+                            .hint_text(tr!("table.filter.hint"))
+                            .desired_width(120.0)
+                        );
+                        if resp.changed() { changed = true; }
+                        if !tab.filter.is_empty() {
+                            if ui.button(RichText::new("✖").size(10.0).color(Color32::from_rgb(255, 100, 100))).clicked() {
+                                tab.filter.clear();
+                                changed = true;
                             }
-                        });
+                        }
                         changed
                     };
                     if filter_changed {
@@ -129,30 +134,33 @@ impl CopaibaApp {
                         self.play_key_sound();
                     }
 
-                    ui.add_space(12.0);
-                    ui.separator();
-                    ui.add_space(12.0);
+                    if ui.add(egui::Button::new(RichText::new("📝 Batch").size(10.0))).clicked() {
+                        self.ui.show_batch_edit = true;
+                    }
 
-                    // Resampler controls
+                    ui.separator();
+
+                    // Resampler controls (Right Aligned)
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let has_resampler = self.config.resampler_path.is_some();
                         let test_btn = egui::Button::new(RichText::new(format!("🧪 {}", tr!("header.resampler.test"))).strong().color(Color32::from_rgb(20, 20, 30)))
                             .fill(Color32::from_rgb(137, 180, 250))
-                            .min_size(egui::vec2(100.0, 24.0));
+                            .min_size(egui::vec2(80.0, 20.0));
                         if ui.add(test_btn).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
                             if has_resampler { self.resample_current(); }
                         }
 
-                        if ui.button(RichText::new(format!("🧹 {}", tr!("header.resampler.clear_cache"))).size(10.0)).clicked() {
+                        if ui.add(egui::Button::new(RichText::new("🧹").size(11.0))).on_hover_text(tr!("header.resampler.clear_cache")).clicked() {
                             self.clear_resampler_cache();
                         }
                         
-                        ui.add(egui::DragValue::new(&mut self.config.test_duration_ms).suffix("ms").range(50.0..=2000.0));
+                        ui.add(egui::DragValue::new(&mut self.config.test_duration_ms).suffix("ms").range(50.0..=2000.0).speed(5.0));
+                        
                         ui.separator();
 
                         ComboBox::from_id_salt("pitch_select")
                             .selected_text(RichText::new(&self.config.test_pitch).color(Color32::from_rgb(137, 180, 250)).strong())
-                            .width(60.0)
+                            .width(50.0)
                             .show_ui(ui, |ui| {
                                 egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
                                     for p in &["C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
@@ -166,21 +174,14 @@ impl CopaibaApp {
                                     }
                                 });
                             });
-                        ui.label(tr!("header.pitch.label"));
-                        ui.separator();
 
                         ui.add(egui::TextEdit::singleline(&mut self.config.test_flags)
                             .hint_text("Flags")
-                            .desired_width(60.0)
-                            .margin(egui::Margin::symmetric(4, 2))
+                            .desired_width(40.0)
                         );
                         ui.label("Flags");
-                        ui.separator();
 
-                        if let Some(res) = &self.config.resampler_path {
-                            ui.label(RichText::new(res.file_name().unwrap_or_default().to_string_lossy()).size(9.0).color(ui.visuals().weak_text_color()));
-                        }
-                        if ui.add(egui::Button::new(RichText::new(format!("⚙ {}", tr!("header.resampler.select"))).strong())).clicked() {
+                        if ui.add(egui::Button::new(RichText::new("⚙").size(11.0))).on_hover_text(tr!("header.resampler.select")).clicked() {
                             #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
                             if let Some(path) = rfd::FileDialog::new().pick_file() { self.config.resampler_path = Some(path); }
                         }
@@ -189,12 +190,12 @@ impl CopaibaApp {
 
                 ui.add_space(2.0);
                 ui.separator();
+                ui.add_space(2.0);
 
-                // Secondary Row (Volume, Device, Alias guide)
+                // ── ROW 3: Selection & Playback ───────────────────────────────
                 ui.horizontal(|ui| {
                     ui.add_space(4.0);
-
-                    // ── Alias Guide ──────────────────────────────────────────
+                    // Alias Pill
                     {
                         let tab = &self.tabs[tab_idx];
                         let alias = tab.filtered.get(tab.selected)
@@ -205,60 +206,53 @@ impl CopaibaApp {
                         let total = tab.filtered.len();
                         let pos = if total > 0 { tab.selected.saturating_add(1).min(total) } else { 0 };
 
-                        // Pill background
                         let alias_text = if alias.is_empty() { "—".to_string() } else { alias.to_string() };
                         let counter_text = format!("{}/{}", pos, total);
 
-                        ui.add_space(4.0);
-
-                        // Draw a visually distinct "alias pill"
-                        let text = egui::RichText::new(&alias_text)
-                            .strong()
-                            .size(15.0)
-                            .color(Color32::from_rgb(220, 190, 255));
-                        let label = ui.label(text);
-                        label.on_hover_text("Alias atual sendo configurado");
-
-                        ui.add_space(4.0);
-                        ui.label(
-                            egui::RichText::new(&counter_text)
-                                .size(10.0)
-                                .color(ui.visuals().weak_text_color())
-                        );
-                        ui.add_space(8.0);
-                        ui.separator();
+                        ui.label(egui::RichText::new(&alias_text).strong().size(13.0).color(Color32::from_rgb(220, 190, 255)));
+                        ui.label(egui::RichText::new(&counter_text).size(9.0).color(ui.visuals().weak_text_color()));
                     }
 
-                    ui.add_space(8.0);
-                    ui.label(tr!("header.label.playback_speed"));
-                    ui.add(egui::Slider::new(&mut self.audio.playback_speed, 0.1..=2.0).clamping(egui::SliderClamping::Always).suffix("x"));
-                    if ui.button("⟲").clicked() {
-                        self.audio.playback_speed = 1.0;
-                    }
-                    ui.add_space(16.0);
-                    ui.add(egui::Slider::new(&mut self.config.test_volume, 0.0..=1.5).text(tr!("header.label.volume")));
-                    
-                    ui.add_space(8.0);
-                    ui.separator();
-                    ui.add_space(8.0);
-
-                    if ui.add(egui::Button::new(RichText::new("🎧").size(10.0))).on_hover_text("Refresh audio devices").clicked() {
-                        self.refresh_audio_devices();
-                    }
-                    ui.add_space(2.0);
-                    ComboBox::from_id_salt("audio_device_select")
-                        .selected_text(RichText::new(self.config.audio_device.as_deref().unwrap_or("Default Device")).size(9.0))
-                        .width(120.0)
-                        .show_ui(ui, |ui| {
-                            if ui.selectable_label(self.config.audio_device.is_none(), "Default Device").clicked() {
-                                self.set_audio_device(None);
-                            }
-                            for dev in self.ui.available_devices.clone() {
-                                if ui.selectable_label(self.config.audio_device.as_ref() == Some(&dev), &dev).clicked() {
-                                    self.set_audio_device(Some(dev));
+                    // File Stats (Hz/ms)
+                    {
+                        let tab = &self.tabs[tab_idx];
+                        if let Some(&idx) = tab.filtered.get(tab.selected) {
+                            if let Some(entry) = tab.entries.get(idx) {
+                                let full_path = tab.oto_dir.as_ref().map(|d| d.join(&entry.filename).to_string_lossy().to_string()).unwrap_or_else(|| entry.filename.clone());
+                                if let Some(wav) = self.wav_cache.get(&full_path) {
+                                    ui.add_space(4.0);
+                                    ui.label(RichText::new(format!("• {}Hz | {}ms", wav.sample_rate, wav.duration_ms as u32)).size(9.0).color(ui.visuals().weak_text_color()));
                                 }
                             }
-                        });
+                        }
+                    }
+
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.add(egui::Button::new(RichText::new("🎧").size(10.0))).on_hover_text("Refresh audio devices").clicked() {
+                            self.refresh_audio_devices();
+                        }
+                        ComboBox::from_id_salt("audio_device_select")
+                            .selected_text(RichText::new(self.config.audio_device.as_deref().unwrap_or("Default Device")).size(9.0))
+                            .width(90.0)
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_label(self.config.audio_device.is_none(), "Default Device").clicked() {
+                                    self.set_audio_device(None);
+                                }
+                                for dev in self.ui.available_devices.clone() {
+                                    if ui.selectable_label(self.config.audio_device.as_ref() == Some(&dev), &dev).clicked() {
+                                        self.set_audio_device(Some(dev));
+                                    }
+                                }
+                            });
+                        
+                        ui.separator();
+                        
+                        ui.add(egui::Slider::new(&mut self.config.test_volume, 0.0..=1.5).show_value(false));
+                        ui.label("🔊");
+                        ui.separator();
+                        ui.add(egui::Slider::new(&mut self.audio.playback_speed, 0.1..=2.0).clamping(egui::SliderClamping::Always).suffix("x").show_value(true));
+                        ui.label("Vel:");
+                    });
                 });
             });
             ui.add_space(2.0);

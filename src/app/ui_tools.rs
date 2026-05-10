@@ -50,19 +50,35 @@ impl CopaibaApp {
                                 .on_hover_text(tr!("tools.label.srp_desc"));
                             ui.checkbox(&mut tab.wave_view.sro, tr!("tools.label.sro"))
                                 .on_hover_text(tr!("tools.label.sro_desc"));
-                            ui.checkbox(&mut tab.wave_view.snap_to_peaks, tr!("tools.label.auto_oto"))
-                                .on_hover_text(tr!("tools.label.auto_oto_desc"));
                         }
                         ui.checkbox(&mut self.visual.persistent_zoom, tr!("tools.label.zoom"))
                             .on_hover_text(tr!("tools.label.zoom_desc"));
 
                         ui.separator();
 
-                        // --- STATUS ---
+                        // --- SELECTION & PROGRESS ---
                         {
                             let tab = self.cur();
-                            ui.label(RichText::new(format!("Aliases: {}  |  {}: {}", tab.entries.len(), tr!("tools.label.filtered"), tab.filtered.len())).size(10.0));
+                            if !tab.multi_selection.is_empty() {
+                                ui.separator();
+                                ui.label(RichText::new(format!("{} selecionados", tab.multi_selection.len())).size(10.0).color(Color32::from_rgb(255, 215, 0)));
+                            }
+                            
+                            ui.separator();
+                            let done = tab.entries.iter().filter(|e| e.done).count();
+                            let total = tab.entries.len();
+                            let percent = if total > 0 { (done as f32 / total as f32) * 100.0 } else { 0.0 };
+                            ui.label(RichText::new(format!("Progresso: {}/{} ({:.1}%)", done, total, percent)).size(10.0).color(Color32::from_rgb(150, 255, 150)));
                         }
+
+                        ui.separator();
+
+                        // --- SHORTCUTS HINTS ---
+                        ui.vertical(|ui| {
+                            ui.spacing_mut().item_spacing.y = 0.0;
+                            ui.label(RichText::new("⌨ Atários:").size(9.0).weak());
+                            ui.label(RichText::new("[Space] Play | [Ctrl+S] Salvar | [Q/W/E/R/T] Parâmetros").size(8.0).weak());
+                        });
                     });
                 });
             });

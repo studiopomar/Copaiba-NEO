@@ -23,6 +23,7 @@ impl CopaibaApp {
         self.modal_readme(ctx);
         self.modal_license(ctx);
         self.modal_auto_oto(ctx);
+        self.modal_update_notification(ctx);
     }
 
     fn modal_exit_dialog(&mut self, ctx: &egui::Context) {
@@ -719,7 +720,7 @@ impl CopaibaApp {
                             .corner_radius(10)
                     );
                     ui.add_space(24.0);
-                    ui.heading(RichText::new("Copaiba NEO v200 Bergamota").strong().size(36.0));
+                    ui.heading(RichText::new("Copaiba NEO v201 Carambola").strong().size(36.0));
                     ui.label(RichText::new("Oto.ini Editor").color(egui::Color32::from_gray(120)));
                     ui.add_space(24.0);
 
@@ -867,5 +868,56 @@ impl CopaibaApp {
             });
 
         self.ui.show_auto_oto = open;
+    }
+
+    fn modal_update_notification(&mut self, ctx: &egui::Context) {
+        let update_info = {
+            let lock = self.ui.update_available.lock().unwrap();
+            lock.clone()
+        };
+
+        if let Some(info) = update_info {
+            // Automatically show if we have an update and haven't shown it yet
+            let mut show = self.ui.show_update_modal;
+            if !show && !ctx.memory(|m| m.data.get_temp::<bool>(egui::Id::new("update_dismissed")).unwrap_or(false)) {
+                self.ui.show_update_modal = true;
+                show = true;
+            }
+
+            if show {
+                egui::Window::new("🚀 Nova Versão Disponível")
+                    .id(egui::Id::new("update_notification"))
+                    .collapsible(false)
+                    .resizable(false)
+                    .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+                    .show(ctx, |ui| {
+                        ui.vertical_centered(|ui| {
+                            ui.heading(format!("Versão {} disponível!", info.version));
+                            ui.label(RichText::new(&info.title).strong().size(14.0));
+                        });
+                        
+                        ui.add_space(8.0);
+                        egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
+                            ui.label(&info.body);
+                        });
+                        
+                        ui.add_space(16.0);
+                        ui.horizontal(|ui| {
+                            if ui.button(RichText::new("Atualizar Agora").strong().color(egui::Color32::from_rgb(137, 180, 250))).clicked() {
+                                if let Some(url) = info.download_url {
+                                    let _ = open::that(url);
+                                } else {
+                                    let _ = open::that(info.url);
+                                }
+                                self.ui.show_update_modal = false;
+                            }
+                            if ui.button("Depois").clicked() {
+                                self.ui.show_update_modal = false;
+                                ctx.memory_mut(|m| m.data.insert_temp(egui::Id::new("update_dismissed"), true));
+                            }
+                        });
+                    });
+            }
+        }
     }
 }

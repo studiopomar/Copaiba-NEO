@@ -270,6 +270,10 @@ pub struct UiState {
 
     // Toasts
     pub toast_manager: crate::app::toast::ToastManager,
+
+    // Updates
+    pub show_update_modal: bool,
+    pub update_available: Arc<Mutex<Option<crate::app::updater::UpdateInfo>>>,
 }
 
 impl Default for UiState {
@@ -309,6 +313,8 @@ impl Default for UiState {
             log_history: Vec::new(),
             available_devices: Vec::new(),
             toast_manager: crate::app::toast::ToastManager::default(),
+            show_update_modal: false,
+            update_available: Arc::new(Mutex::new(None)),
         }
     }
 }

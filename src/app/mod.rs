@@ -22,5 +22,6 @@ pub mod layout;
 pub mod auto_oto;
 pub mod toast;
 pub mod bidi;
+pub mod updater;
 
 pub use state::CopaibaApp;
