@@ -80,7 +80,7 @@ pub fn run() -> eframe::Result {
             runner.start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(setup_app_box(cc))),
+                Box::new(|cc| Ok(setup_app_box(cc, Vec::new()))),
             ).await.expect("failed to start eframe");
         });
         Ok(())

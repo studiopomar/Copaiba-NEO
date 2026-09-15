@@ -906,8 +906,10 @@ impl CopaibaApp {
                         ui.horizontal(|ui| {
                             if ui.button(RichText::new("Atualizar Agora").strong().color(egui::Color32::from_rgb(137, 180, 250))).clicked() {
                                 if let Some(url) = info.download_url {
+                                    #[cfg(not(target_arch = "wasm32"))]
                                     let _ = open::that(url);
                                 } else {
+                                    #[cfg(not(target_arch = "wasm32"))]
                                     let _ = open::that(info.url);
                                 }
                                 self.ui.show_update_modal = false;

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <title>Copaiba NEO</title>
+    <link data-trunk rel="copy-file" href="favicon_mori.png" />
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #111827; }
+      #the_canvas_id { width: 100%; height: 100%; display: block; }
+      #loading { position: fixed; inset: 0; display: grid; place-items: center; color: #e5e7eb; font: 16px system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Carregando Copaiba NEO…</div>
+    <canvas id="the_canvas_id"></canvas>
+    <script>
+      window.addEventListener("trunk-wasm-ready", () => document.getElementById("loading")?.remove());
+    </script>
+</body>
+</html>

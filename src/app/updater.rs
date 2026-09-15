@@ -1,5 +1,7 @@
 use serde::Deserialize;
+#[cfg(not(target_arch = "wasm32"))]
 use std::sync::{Arc, Mutex};
+#[cfg(not(target_arch = "wasm32"))]
 use semver::Version;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -26,6 +28,7 @@ pub struct UpdateInfo {
     pub download_url: Option<String>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn check_for_updates(current_version_str: &str) -> Option<UpdateInfo> {
     let client = reqwest::blocking::Client::builder()
         .user_agent("Copaiba-NEO-Updater")
@@ -68,6 +71,7 @@ pub fn check_for_updates(current_version_str: &str) -> Option<UpdateInfo> {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn spawn_update_check(current_version: String, result_arc: Arc<Mutex<Option<UpdateInfo>>>) {
     std::thread::spawn(move || {
         if let Some(info) = check_for_updates(&current_version) {
