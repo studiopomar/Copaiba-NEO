@@ -994,6 +994,7 @@ dependencies = [
  "encoding_rs",
  "hound",
  "image",
+ "js-sys",
  "log",
  "open",
  "pitch-detection",
