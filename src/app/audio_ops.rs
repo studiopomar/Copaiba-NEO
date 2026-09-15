@@ -16,6 +16,8 @@ impl CopaibaApp {
     }
 
     pub fn stop_playback(&mut self) {
+        #[cfg(target_arch = "wasm32")]
+        crate::web_audio::stop();
         if let Some(sink) = &self.audio.sink {
             sink.stop();
         }
@@ -103,6 +105,15 @@ impl CopaibaApp {
                         let playback_speed = self.audio.playback_speed;
                         if (playback_speed - 1.0).abs() > 0.01 {
                             samples = crate::wsola::wsola_stretch(&samples, playback_speed);
+                        }
+
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            let _ = crate::web_audio::play(&samples, wav.sample_rate);
+                            self.audio.playback_start = Some(std::time::Instant::now());
+                            self.audio.playback_offset_ms = (start_idx as f64 / wav.sample_rate as f64) * 1000.0;
+                            self.audio.playback_limit_ms = if full { None } else { Some((end_idx as f64 / wav.sample_rate as f64) * 1000.0) };
+                            return;
                         }
 
                         let source = rodio::buffer::SamplesBuffer::new(1, wav.sample_rate, samples);

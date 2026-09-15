@@ -9,6 +9,8 @@ pub mod plugins;
 pub mod wsola;
 #[cfg(target_arch = "wasm32")]
 pub mod web_files;
+#[cfg(target_arch = "wasm32")]
+pub mod web_audio;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
