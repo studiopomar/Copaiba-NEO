@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#111827" />
     <title>Copaiba NEO</title>
-    <link data-trunk rel="rust" data-target-name="copaiba_neo_web" />
     <link data-trunk rel="copy-file" href="favicon_mori.png" />
     <style>
       html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #111827; }
@@ -16,8 +15,9 @@
   <body>
     <div id="loading">Carregando Copaiba NEO…</div>
     <canvas id="the_canvas_id"></canvas>
-    <script>
-      window.addEventListener("trunk-wasm-ready", () => document.getElementById("loading")?.remove());
+    <script type="module">
+      import init from "./copaiba_neo.js";
+      init().then(() => document.getElementById("loading")?.remove());
     </script>
 </body>
 </html>
