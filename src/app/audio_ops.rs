@@ -76,6 +76,11 @@ impl CopaibaApp {
     }
 
     pub fn play_current_segment(&mut self, full: bool) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.play_current_segment_web(full);
+            return;
+        }
         self.init_audio();
         let sink = match &self.audio.sink {
             Some(s) => s,
@@ -127,6 +132,33 @@ impl CopaibaApp {
                 }
             }
         }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn play_current_segment_web(&mut self, full: bool) {
+        let tab = self.cur();
+        let Some(&idx) = tab.filtered.get(tab.selected) else { return; };
+        let Some(entry) = tab.entries.get(idx) else { return; };
+        let key = tab.oto_dir.as_ref().map(|dir| dir.join(&entry.filename).to_string_lossy().to_string())
+            .unwrap_or_else(|| entry.filename.clone());
+        let Some(wav) = self.wav_cache.get(&key).cloned() else {
+            self.ensure_wav_loaded();
+            return;
+        };
+        let start_idx = if full { 0 } else { ((entry.offset / 1000.0) * wav.sample_rate as f64) as usize };
+        let abs_cutoff = if entry.cutoff < 0.0 { entry.offset - entry.cutoff } else { wav.duration_ms - entry.cutoff };
+        let end_idx = if full { wav.samples.len() } else {
+            ((abs_cutoff / 1000.0) * wav.sample_rate as f64).min(wav.samples.len() as f64) as usize
+        };
+        if end_idx <= start_idx { return; }
+        let samples = wav.samples[start_idx..end_idx].to_vec();
+        if let Err(error) = crate::web_audio::play(&samples, wav.sample_rate) {
+            self.log(format!("Áudio web: {error}"), egui::Color32::RED);
+            return;
+        }
+        self.audio.playback_start = Some(std::time::Instant::now());
+        self.audio.playback_offset_ms = start_idx as f64 / wav.sample_rate as f64 * 1000.0;
+        self.audio.playback_limit_ms = if full { None } else { Some(end_idx as f64 / wav.sample_rate as f64 * 1000.0) };
     }
 
     pub fn play_wav_data(&mut self, wav: WavData) {
