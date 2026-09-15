@@ -87,6 +87,12 @@ pub fn run() -> eframe::Result {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(start)]
+pub fn start_web() {
+    run().expect("failed to start Copaiba NEO in the browser");
+}
+
 fn setup_app_box(cc: &eframe::CreationContext<'_>, args: Vec<String>) -> Box<dyn eframe::App> {
     egui_extras::install_image_loaders(&cc.egui_ctx);
     let mut app = CopaibaApp::default();
