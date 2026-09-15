@@ -212,6 +212,12 @@ impl CopaibaApp {
         self.ui.show_home = false;
         self.ui.status = format!("{} aliases carregados", self.cur().entries.len());
         for (name, bytes) in files { self.web_files.insert(name, bytes); }
+        if let Some((_, bytes)) = self.web_files.iter().find(|(name, _)| name.rsplit('/').next() == Some("character.txt")) {
+            let text = String::from_utf8_lossy(bytes);
+            if let Some(name) = text.lines().find_map(|line| line.strip_prefix("name=")) {
+                self.cur_mut().character_name = name.trim().to_string();
+            }
+        }
         self.ensure_wav_loaded();
     }
 
@@ -509,6 +515,17 @@ impl CopaibaApp {
             (tab.oto_path.clone(), self.encoding)
         };
         if let Some(path) = path_opt {
+            #[cfg(target_arch = "wasm32")]
+            {
+                let contents = self.cur().entries.iter().map(|entry| entry.to_line()).collect::<Vec<_>>().join("\n");
+                let _ = crate::web_download::download_text("oto.ini", &contents);
+                let entries = self.cur().entries.clone();
+                let tab = self.cur_mut();
+                tab.original_entries = entries;
+                tab.dirty = false;
+                self.ui.status = "oto.ini baixado".to_string();
+                return;
+            }
             let path: PathBuf = path; // Force PathBuf
             let res = {
                 let tab = self.cur();

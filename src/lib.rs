@@ -11,6 +11,8 @@ pub mod wsola;
 pub mod web_files;
 #[cfg(target_arch = "wasm32")]
 pub mod web_audio;
+#[cfg(target_arch = "wasm32")]
+pub mod web_download;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
