@@ -7,6 +7,7 @@ use web_sys::{Event, FileReader, HtmlInputElement};
 
 thread_local! {
     static QUEUE: RefCell<Vec<(String, Vec<u8>)>> = const { RefCell::new(Vec::new()) };
+    static READY: RefCell<bool> = const { RefCell::new(false) };
 }
 
 pub fn request_voicebank() {
@@ -22,6 +23,9 @@ pub fn request_voicebank() {
         let files = input.files().unwrap();
         let total = files.length();
         let remaining = Rc::new(RefCell::new(total));
+        if total == 0 {
+            READY.with(|ready| *ready.borrow_mut() = true);
+        }
         for index in 0..total {
             let file = files.get(index).unwrap();
             let name = js_sys::Reflect::get(file.as_ref(), &"webkitRelativePath".into())
@@ -37,6 +41,9 @@ pub fn request_voicebank() {
                     QUEUE.with(|queue| queue.borrow_mut().push((name_clone, bytes)));
                 }
                 *remaining_clone.borrow_mut() -= 1;
+                if *remaining_clone.borrow() == 0 {
+                    READY.with(|ready| *ready.borrow_mut() = true);
+                }
             }) as Box<dyn FnOnce(_)>);
             reader.set_onload(Some(onload.as_ref().unchecked_ref()));
             onload.forget();
@@ -49,5 +56,8 @@ pub fn request_voicebank() {
 }
 
 pub fn take_files() -> Vec<(String, Vec<u8>)> {
+    let ready = READY.with(|ready| *ready.borrow());
+    if !ready { return Vec::new(); }
+    READY.with(|ready| *ready.borrow_mut() = false);
     QUEUE.with(|queue| std::mem::take(&mut *queue.borrow_mut()))
 }
