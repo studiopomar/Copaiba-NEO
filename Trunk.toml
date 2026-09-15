@@ -1,7 +1,2 @@
 dist = "dist"
 public_url = "/Copaiba-NEO/"
-
-[[hooks]]
-stage = "build"
-command = "sh"
-command_arguments = ["-c", "cp favicon_mori.png dist/favicon_mori.png"]
