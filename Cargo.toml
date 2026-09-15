@@ -6,7 +6,7 @@ description = "Copaiba NEO — oto.ini editor for UTAU/OpenUTAU"
 license = "MIT"
 
 [lib]
-name = "copaiba_neo"
+name = "copaiba_neo_web"
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 

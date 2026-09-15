@@ -1,3 +1,3 @@
 fn main() -> eframe::Result {
-    copaiba_neo::run()
+    copaiba_neo_web::run()
 }
