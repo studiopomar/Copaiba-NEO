@@ -58,11 +58,16 @@ pub struct ParsedOto {
 /// Parse an oto.ini file from disk.
 /// Tries to detect encoding (UTF-8 or Shift-JIS) based on success and character validity.
 pub fn parse_oto(path: &Path) -> Result<ParsedOto, String> {
-    parse_oto_with_encoding(path, None)
+    let bytes = fs::read(path).map_err(|e: std::io::Error| e.to_string())?;
+    parse_oto_bytes(&bytes, None)
 }
 
 pub fn parse_oto_with_encoding(path: &Path, force_encoding: Option<OtoEncoding>) -> Result<ParsedOto, String> {
     let bytes = fs::read(path).map_err(|e: std::io::Error| e.to_string())?;
+    parse_oto_bytes(&bytes, force_encoding)
+}
+
+pub fn parse_oto_bytes(bytes: &[u8], force_encoding: Option<OtoEncoding>) -> Result<ParsedOto, String> {
 
     let (text, encoding) = if let Some(forced) = force_encoding {
         match forced {

@@ -7,6 +7,8 @@ pub mod waveform;
 pub mod spectrogram;
 pub mod plugins;
 pub mod wsola;
+#[cfg(target_arch = "wasm32")]
+pub mod web_files;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
@@ -208,6 +210,8 @@ fn setup_fonts(ctx: &egui::Context) {
 
 impl eframe::App for CopaibaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(target_arch = "wasm32")]
+        self.poll_web_voicebank();
         let now = ctx.input(|i| i.time);
         if self.session_start_time == 0.0 { self.session_start_time = now; }
         // Splash logic removed

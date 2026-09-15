@@ -63,6 +63,12 @@ impl CopaibaApp {
     }
 
     pub fn open_voicebank_dir(&mut self) {
+        #[cfg(target_arch = "wasm32")]
+        {
+            crate::web_files::request_voicebank();
+            self.ui.status = "Selecione a pasta do voicebank no navegador".to_string();
+            return;
+        }
         #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             let mut otos = Vec::new();
@@ -173,6 +179,40 @@ impl CopaibaApp {
                 }
             }
         }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn poll_web_voicebank(&mut self) {
+        let files = crate::web_files::take_files();
+        if files.is_empty() { return; }
+        let oto = files.iter().find(|(name, _)| name.to_lowercase().ends_with("oto.ini"));
+        let Some((oto_name, oto_bytes)) = oto else {
+            self.ui.toast_manager.error("Nenhum oto.ini encontrado na pasta selecionada".to_string());
+            return;
+        };
+        let parsed = match crate::oto::parse_oto_bytes(oto_bytes, None) {
+            Ok(parsed) => parsed,
+            Err(error) => { self.ui.toast_manager.error(format!("Falha ao ler oto.ini: {error}")); return; }
+        };
+        let virtual_root = std::path::PathBuf::from("/web-voicebank");
+        let oto_path = virtual_root.join(oto_name);
+        let reuse = self.tabs.len() == 1 && self.tabs[0].oto_path.is_none() && self.tabs[0].entries.is_empty();
+        if !reuse { self.tabs.push(TabState::default()); self.current_tab = self.tabs.len() - 1; }
+        let tab = self.cur_mut();
+        tab.entries = parsed.entries.clone();
+        tab.original_entries = parsed.entries;
+        tab.oto_path = Some(oto_path);
+        tab.oto_dir = Some(virtual_root);
+        tab.name = oto_name.split('/').next().unwrap_or("Voicebank").to_string();
+        tab.filtered = (0..tab.entries.len()).collect();
+        tab.selected = 0;
+        tab.dirty = false;
+        self.encoding = parsed.encoding;
+        self.rebuild_filter();
+        self.ui.show_home = false;
+        self.ui.status = format!("{} aliases carregados", self.cur().entries.len());
+        for (name, bytes) in files { self.web_files.insert(name, bytes); }
+        self.ensure_wav_loaded();
     }
 
     pub fn add_to_recent(&mut self, tab_idx: usize) {
@@ -535,6 +575,27 @@ impl CopaibaApp {
                     self.spec_data_cache.insert(full_path_key, sd);
                 }
                 return;
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                let wanted = fname.replace('\\', "/");
+                let bytes = self.web_files.iter()
+                    .find(|(name, _)| name.ends_with(&wanted) || name.rsplit('/').next() == Some(wanted.as_str()))
+                    .map(|(_, bytes)| bytes.clone());
+                if let Some(bytes) = bytes {
+                    match crate::audio::load_wav_from_bytes(&bytes) {
+                        Ok(wav_with_spec) => {
+                            let dur = wav_with_spec.wav.duration_ms;
+                            self.wav_cache.insert(full_path_key.clone(), wav_with_spec.wav);
+                            let persistent_y = self.visual.persistent_y_zoom;
+                            let tab = self.cur_mut();
+                            tab.wave_view.reset_to(dur, persistent_y);
+                        }
+                        Err(e) => self.ui.status = format!("WAV '{fname}': {e}"),
+                    }
+                    return;
+                }
             }
 
             match load_wav(&wav_path) {

@@ -380,6 +380,8 @@ pub struct CopaibaApp {
     pub current_tab: usize,
 
     pub wav_cache: HashMap<String, WavData>,
+    #[cfg(target_arch = "wasm32")]
+    pub web_files: HashMap<String, Vec<u8>>,
     pub spec_data_cache: HashMap<String, SpectrogramData>,
     pub pitch_data_cache: HashMap<String, crate::audio::PitchData>,
     pub encoding: OtoEncoding,
@@ -428,6 +430,8 @@ impl Default for CopaibaApp {
             current_tab: 0,
 
             wav_cache: HashMap::new(),
+            #[cfg(target_arch = "wasm32")]
+            web_files: HashMap::new(),
             spec_data_cache: HashMap::new(),
             pitch_data_cache: HashMap::new(),
             encoding: OtoEncoding::ShiftJis,
