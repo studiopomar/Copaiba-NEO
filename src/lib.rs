@@ -18,6 +18,8 @@ pub mod web_download;
 use std::path::Path;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Arc;
+#[cfg(target_arch = "wasm32")]
+use std::sync::Arc;
 use egui::{Color32, Stroke};
 use app::CopaibaApp;
 use app::state::AppTheme;
@@ -168,6 +170,13 @@ fn reshape_egl_arabic(egl: &str) -> String {
 
 fn setup_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
+    #[cfg(target_arch = "wasm32")]
+    {
+        let data = include_bytes!("assets/fonts/NotoSansJP-Regular.ttf").to_vec();
+        fonts.font_data.insert("web_cjk_font".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+        fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "web_cjk_font".to_owned());
+        fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().insert(0, "web_cjk_font".to_owned());
+    }
     #[cfg(not(target_arch = "wasm32"))]
     {
         let system_fonts = [
