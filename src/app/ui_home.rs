@@ -16,13 +16,15 @@ impl CopaibaApp {
                         ui.set_max_width(800.0);
                         
                         ui.add_space(60.0);
-                        ui.label(RichText::new(tr!("home.title")).size(48.0).strong().color(Color32::from_rgb(140, 100, 200)));
+                        let title_size = (ui.available_width() * 0.09).clamp(28.0, 48.0);
+                        ui.label(RichText::new(tr!("home.title")).size(title_size).strong().color(Color32::from_rgb(140, 100, 200)));
                         ui.label(RichText::new(tr!("home.subtitle")).size(16.0).color(Color32::GRAY));
                         ui.add_space(40.0);
                         
                         crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
-                            ui.add_space(ui.available_width() / 2.0 - 150.0);
-                            if ui.add(egui::Button::new(RichText::new(format!("📁 {}",tr!("home.btn.open_voicebank"))).size(18.0)).min_size(Vec2::new(300.0, 50.0))).clicked() {
+                            let button_width = ui.available_width().min(360.0).max(220.0);
+                            ui.add_space((ui.available_width() - button_width) / 2.0);
+                            if ui.add(egui::Button::new(RichText::new(format!("📁 {}",tr!("home.btn.open_voicebank"))).size(18.0)).min_size(Vec2::new(button_width, 50.0))).clicked() {
                                 self.open_voicebank_dir();
                             }
                         });

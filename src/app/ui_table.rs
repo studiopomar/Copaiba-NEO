@@ -5,9 +5,11 @@ use super::state::CopaibaApp;
 impl CopaibaApp {
     pub fn show_alias_table(&mut self, ctx: &egui::Context) {
         let side = if self.config.table_on_right { egui::SidePanel::right("alias_sidebar") } else { egui::SidePanel::left("alias_sidebar") };
+        let screen_width = ctx.screen_rect().width();
         side.resizable(true)
-            .default_width(420.0)
-            .min_width(200.0)
+            .default_width(if screen_width < 600.0 { screen_width * 0.92 } else { 420.0 })
+            .min_width(if screen_width < 600.0 { 150.0 } else { 200.0 })
+            .max_width(if screen_width < 600.0 { screen_width * 0.96 } else { screen_width * 0.7 })
             .show(ctx, |ui| {
                 let mut play_sound = false;
                 let mut flip_side = false;

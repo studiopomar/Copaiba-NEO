@@ -57,7 +57,7 @@ pub fn run() -> eframe::Result {
             viewport: egui::ViewportBuilder::default()
                 .with_title("Copaiba NEO v201 Carambola")
                 .with_inner_size([1280.0, 720.0])
-                .with_min_inner_size([800.0, 500.0])
+                .with_min_inner_size([360.0, 300.0])
                 .with_icon(icon_data.unwrap_or_default()),
             multisampling: 0,
             ..Default::default()
