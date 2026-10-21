@@ -2,7 +2,6 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
@@ -40,16 +39,16 @@ jobs:
         export ARCH=x86_64
         export APPIMAGE_EXTRACT_AND_RUN=1
         ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
-    - name: Upload Linux Binary
+    - name: Package Linux builds
+      run: |
+        mkdir -p release-assets
+        mv ./*.AppImage "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.AppImage"
+        tar -czf "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.tar.gz" -C target/release copaiba_neo
+    - name: Upload Linux builds
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-${{ github.ref_name }}-linux-x64
-        path: target/release/copaiba_neo
-    - name: Upload AppImage
-      uses: actions/upload-artifact@v4
-      with:
-        name: copaiba_neo-${{ github.ref_name }}-appimage
-        path: "*.AppImage"
+        name: copaiba_neo-linux
+        path: release-assets/*
 
   build-windows:
     runs-on: windows-latest
@@ -59,21 +58,88 @@ jobs:
       run: magick favicon_mori.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
     - name: Build
       run: cargo build --release
-    - name: Upload Windows Binary
+    - name: Package Windows build
+      run: |
+        New-Item -ItemType Directory -Force release-assets | Out-Null
+        Copy-Item target/release/copaiba_neo.exe "release-assets/Copaiba-NEO-${{ github.ref_name }}-Windows-x86_64.exe"
+    - name: Upload Windows build
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-${{ github.ref_name }}-windows-x64
-        path: target/release/copaiba_neo.exe
+        name: copaiba_neo-windows
+        path: release-assets/*
 
   build-macos:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Install universal Rust targets
+      run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
     - name: Build
-      run: cargo build --release
-    - name: Upload macOS Binary
+      run: |
+        cargo build --release --target aarch64-apple-darwin
+        cargo build --release --target x86_64-apple-darwin
+    - name: Package universal macOS app
+      run: |
+        app="release-assets/Copaiba NEO.app"
+        mkdir -p "$app/Contents/MacOS"
+        lipo -create \
+          target/aarch64-apple-darwin/release/copaiba_neo \
+          target/x86_64-apple-darwin/release/copaiba_neo \
+          -output "$app/Contents/MacOS/copaiba_neo"
+        cat > "$app/Contents/Info.plist" <<'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>CFBundleExecutable</key><string>copaiba_neo</string>
+          <key>CFBundleIdentifier</key><string>org.studiopomar.copaiba-neo</string>
+          <key>CFBundleName</key><string>Copaiba NEO</string>
+          <key>CFBundlePackageType</key><string>APPL</string>
+          <key>CFBundleShortVersionString</key><string>0.246.0</string>
+          <key>CFBundleVersion</key><string>0.246.0</string>
+          <key>NSHighResolutionCapable</key><true/>
+        </dict>
+        </plist>
+        EOF
+        ditto -c -k --sequesterRsrc --keepParent "$app" \
+          "release-assets/Copaiba-NEO-${{ github.ref_name }}-macOS-universal.zip"
+    - name: Upload universal macOS build
       uses: actions/upload-artifact@v4
       with:
-        name: copaiba_neo-${{ github.ref_name }}-macos-universal
-        # O GitHub Actions no macos-latest (M1/M14) gera binários arm64 por padrão hoje em dia
-        path: target/release/copaiba_neo
+        name: copaiba_neo-macos
+        path: release-assets/*.zip
+
+  publish-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download platform builds
+      uses: actions/download-artifact@v4
+      with:
+        pattern: copaiba_neo-*
+        path: release-assets
+        merge-multiple: true
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Copaiba NEO v246 - Damasco
+        body: |
+          Esta versão reorganiza a interface do Copaiba e integra o Auto-Oto com o mVocalToolkit.
+
+          ### Downloads
+          - **Windows x86_64:** executável portátil `.exe`.
+          - **macOS universal:** app `.zip` para Apple Silicon e Intel.
+          - **Linux x86_64:** AppImage e pacote `.tar.gz` com o executável.
+
+          O app macOS não está assinado nem notarizado. Na primeira abertura, use o menu de contexto do Finder e escolha Abrir.
+
+          O Auto-Oto prepara o runtime e baixa os modelos necessários na primeira utilização. Consulte o README para instruções e limitações.
+        files: release-assets/*
+        draft: false
+        prerelease: false
+        make_latest: true
+        fail_on_unmatched_files: true

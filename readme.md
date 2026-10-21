@@ -1,91 +1,109 @@
-# Changelog
+<div align="center">
 
-## [v140] - 2026-03-24
+<img src="favicon_mori.png" alt="Ícone do Copaiba NEO" width="104" />
 
-<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/6084fe12-85b9-4267-a442-10736d10df37" />
+# Copaiba NEO
 
+**Editor multiplataforma de `oto.ini` para UTAU e OpenUtau, escrito em Rust.**
 
-### English
+[![Última release](https://img.shields.io/github/v/release/studiopomar/Copaiba-NEO?display_name=tag&style=for-the-badge&logo=github)](https://github.com/studiopomar/Copaiba-NEO/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/studiopomar/Copaiba-NEO/total?style=for-the-badge&logo=github)](https://github.com/studiopomar/Copaiba-NEO/releases)
+[![Estrelas](https://img.shields.io/github/stars/studiopomar/Copaiba-NEO?style=for-the-badge&logo=github&color=DAAA3F)](https://github.com/studiopomar/Copaiba-NEO/stargazers)
+[![Rust](https://img.shields.io/badge/Rust-2021-orange?style=for-the-badge&logo=rust)](Cargo.toml)
+[![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-blue?style=for-the-badge)](Cargo.toml)
 
-#### Added
-- **UI Header**: New tab configuration bar displaying character name, path, and image (60x60 with rounded corners).
-- **Metadata (Modals)**: Readme and License texts reading through dedicated modal windows.
-- **Synthesis Duration**: Custom duration control (default 350ms) in the header for the resampling test.
-- **Key Sounds**: Globally configurable random typing sound feedback.
-- **Asian Fonts & Emojis**: Full support for rendering Japanese text and Emojis integrated into the main system.
-- **Localization (i18n)**: Implemented full multilingual support (i18n) by **HAI-D**.
-- **App Icons**: Implemented favicon and system icon created by **Mori-P**.
-- **Batch Opening**: Single click on Home Screen groups to automatically load all sub-voicebanks in tabs.
-- **Splash Screen**: Redesign with progress messages, stylized logo, fun loading texts, and a credits panel.
-- **Audio Recorder (Re-record - F9)**: Allows capturing and replacing an alias's original audio directly via the app. Includes waveform preview.
-- **Interaction Lock**: Zooming now requires **CTRL + Scroll** and Panning requires **SHIFT + Scroll**.
-- **Loading Bar**: Visual indicator at the top of the Waveform.
-- **Multi-Selection support**: Select multiple entries using **Ctrl + Click** or **Shift + Click**.
-- **Plugin: Consistency Checker**: Validates voicebanks against logical errors in offset/overlap and missing files.
-- **Plugin: Alias Sorter**: Advanced entry sorting (grouping, completed first, alphabetical, etc).
-- **Waveform Customization**: Editor color, thickness, and splines mode customization.
-- **Spectrogram Customization**: FFT size, Hop Size, Colormaps, Gamma, and Frequency control.
-- **Synthesis Test**: App-integrated voice resampling via CLI calls.
+[Baixar](https://github.com/studiopomar/Copaiba-NEO/releases/latest) · [Versão Web](https://studiopomar.github.io/Copaiba-Lexicon-LTS/) · [Recursos](recursos_br.md) · [Histórico de versões](#histórico-de-versões) · [Reportar problema](https://github.com/studiopomar/Copaiba-NEO/issues)
 
-#### Fixed
-- **Multipitch/Multiplex Voicebanks**: Resolved subfolder loading failures where Character images and info would not load if separated in the voicebank root (Recursive search up to 4 levels for `character.txt`).
-- **Dynamic Anchoring of Cutoff**: Fixed waveform logic that failed to anchor positive `Cutoffs` to the end of the audio, causing them to drift when dragging the Offset.
-- **Text & Translations**: Live translations and texts (i18n) configured and now visibly activating in all native elements.
-- **UI Rendering**: Adjusted bar hierarchy (`TopBottomPanel` and `CentralPanel`) to prevent the Status Bar from clipping the bottom half of the Minimap.
-- **Recent UI**: Added a smooth *hover frame* effect to individual items.
-- **Major Bug: Undo/Redo**: Undo/Redo now clears corrupted drag/focus states, preventing editing history loss during plugins.
-- **Spectrogram/Waveform Alignment**: Solved sample plotting offset issues.
-- **Spectrogram Quality**: Prevents stuttering through Bicubic Interpolation (Catmull-Rom) and parallel UI thread lazy computation.
-- **Modal Buttons**: Fixed the functional logic of the modal window Close (X) button.
-- **Sync: Minimap Colors**: Minimap inherits the primary colors from the clip view window.
+</div>
 
-#### Refactored
-- Remodeled windows into separate modules (`src/app/ui_modals.rs` and `ui_header.rs`).
-- Unified Sound and Splash UI correlations to modularize asynchronous initial loading.
-- Decoupled spectrogram recomputation from UI render parameter loops.
-- Removed residual false positive `dead_code` warnings (clean warnings for lean builds).
+O Copaiba NEO ajuda a criar e revisar os parâmetros de pronúncia de bancos de voz. A tabela de aliases e a waveform oferecem edição numérica e visual de `Offset`, `Overlap`, `Preutterance`, `Consonant` e `Cutoff`.
 
----
+> **Versão atual:** `0.246.0`, identificada no aplicativo como **v246 Damasco**. Esta release é compilada para Windows x86_64, macOS universal e Linux x86_64.
 
-<img width="1920" height="1007" alt="image" src="https://github.com/user-attachments/assets/09cc0cbb-9b65-4bbc-b565-e509a84bce38" />
+## Sumário
 
+- [Recursos](#recursos)
+- [Baixar e executar](#baixar-e-executar)
+- [Primeiros passos](#primeiros-passos)
+- [Auto-Oto com mVocalToolkit](#auto-oto-com-mvocaltoolkit)
+- [Versões e lançamentos](#versões-e-lançamentos)
+- [Compilar a partir do código](#compilar-a-partir-do-código)
+- [Contribuir e reportar problemas](#contribuir-e-reportar-problemas)
+- [Star History](#star-history)
+- [Créditos e licença](#créditos-e-licença)
 
-### Português
+## Recursos
 
-#### Adicionados
-- **UI Header**: Nova barra de configuração das abas exibindo nome, caminho e imagem do personagem (60x60 com cantos arredondados).
-- **Metadados (Modais)**: Leitura de textos (Readme e License) através de janelas modais dedicadas.
-- **Duração de Síntese**: Controle de duração personalizado (padrão de 350ms) no header para o resampler.
-- **Sons de Teclado**: Feedback sonoro de teclas randômicas configurável globalmente.
-- **Fontes Asiáticas e Emojis**: Suporte total à renderização de textos Japoneses e Emojis integrado ao sistema principal.
-- **Localização (i18n)**: Implementação do sistema de traduções (i18n) por **HAI-D**.
-- **Gráficos e Ícones**: Implementação do favicon e ícone do aplicativo criados por **Mori-P**.
-- **Batch Opening**: Clique único em grupos da Home Screen para carregar automaticamente todos os sub-voicebanks abertos em abas.
-- **Tela de Inicialização (Splash)**: Redesign com mensagens de progresso, logotipo estilizado, loading text divertido e painel de créditos.
-- **Gravador de Áudio (Regravar - F9)**: Permite capturar e substituir o áudio original de um alias diretamente pelo app. Inclui preview de waveform e audição prévia.
-- **Interações Travadas (Lock)**: Zoom exige **CTRL + Scroll** e Panning (navegar) exige **SHIFT + Scroll**.
-- **Barra de Carregamento**: Indicador visual no topo da Waveform.
-- **Multi-Selection support**: Seleção múltipla com **Ctrl + Click** ou **Shift + Click**.
-- **Plugin: Consistency Checker (Inspetor)**: Verifica o voicebank para erros lógicos em offset/overlap e arquivos faltantes.
-- **Plugin: Alias Sorter**: Ordenação avançada de entradas (agrupamento, concluídos primeiro, alfabética, etc).
-- **Waveform Customization**: Customização de cores, espessura e modo de splines do editor sonoro.
-- **Spectrogram Customization**: Controle de FFT, Hop Size, Colormaps, Gamma e Frequência.
-- **Synthesis Test**: Integração de renderização no aplicativo via chamada CLI.
+- Editar aliases e parâmetros do `oto.ini` na tabela ou diretamente sobre a waveform.
+- Abrir bancos de voz e alternar entre vários arquivos em abas.
+- Filtrar, selecionar vários aliases e aplicar edições em lote.
+- Usar desfazer, refazer, salvamento automático e configurações de tema e idioma.
+- Visualizar waveform, espectrograma e curva de pitch; reproduzir amostras e testar um resampler configurado.
+- Integrar com o fluxo de trabalho do OpenUtau e importar sequências de fonemas pelo plugin.
+- Usar interfaces em português, inglês e árabe, com disposição RTL quando o árabe está selecionado.
+- Gerar propostas de alinhamento do `oto.ini` pelo mVocalToolkit e revisar cada alteração antes de aplicar.
 
-#### Corrigidos
-- **Voicebanks Multipitch/Multiplex**: Resolvido falhas de carregamento de pastas-filhas onde imagens de character e info paravam de carregar se separadas na raiz principal do voicebank. (Busca recursiva de até 4 níveis pelo `character.txt`).
-- **Ancoragem Dinâmica de Cutoff**: Consertado lógica da waveform que não amarrava `Cutoffs` positivos ao final do áudio, causando desvios durante o arrasto do Offset.
-- **Texto e Traduções**: Traduções e textos em tempo-real (i18n) configurados e agora ativando de forma visível em todos os elementos nativos.
-- **Renderização da UI**: Ajustada a hierarquia das barras (`TopBottomPanel` e `CentralPanel`) para prevenir que a Status Bar cortasse metade do Minimapa na parte de baixo.
-- **Recentes UI**: Efeito *hover frame* agora reage suavemente aos itens avulsos.
-- **Major Bug: Undo/Redo**: Desfazer ou refazer limpa drags/foco corrompidos, prevenindo perda de histórico durante plugins.
-- **Spectrogram/Waveform Alignment**: Solucionado desvios de *samples* na plotagem.
-- **Qualidade do Espectrograma**: Evita engasgos através de interpolação Bicubica (Catmull-Rom) e lazy computation da UI thread em paralelo.
-- **Botões Modais**: Fixado UI de fechamento (X) do sistema de modais.
-- **Sync: Cores do Minimapa**: Minimapa herda cores primárias da janela de visualização do clip.
+## Baixar e executar
 
-#### Refatorados
-- Remodelagem das janelas em módulos separados (`src/app/ui_modals.rs` e `ui_header.rs`).
-- Correlações de UI de sons e Splash unificadas para modularizar carregamentos assíncronos iniciais.
-- Desacoplamento da recomputacão do espetrograma frente a loops UI render parameters.
-- Removidos falsos positivos de `dead_code` residuais (warnings limpos para compilações enxutas).
+Baixe uma versão na página de [Releases](https://github.com/studiopomar/Copaiba-NEO/releases). Os workflows do projeto preparam builds para Windows, Linux e macOS. O app macOS é universal, mas não está assinado nem notarizado; na primeira abertura, use o menu de contexto do Finder e escolha **Abrir**. Consulte as notas e os arquivos anexados à release escolhida para confirmar o que está disponível nela.
+
+Também existe uma [versão Web](https://studiopomar.github.io/Copaiba-Lexicon-LTS/). O Auto-Oto que inicia um serviço local é exclusivo do aplicativo desktop.
+
+## Primeiros passos
+
+1. Abra uma pasta de banco de voz ou selecione um `oto.ini`.
+2. Escolha um alias na tabela para carregar sua waveform.
+3. Edite os parâmetros na tabela ou arraste os marcadores da waveform.
+4. Salve o `oto.ini` e teste a pronúncia no resampler configurado.
+
+## Auto-Oto com mVocalToolkit
+
+O Auto-Oto usa o [mVocalToolkit](https://github.com/Megageorgio/mVocalToolkit) para alinhar fonemas e propor valores para o `oto.ini`. As propostas aparecem para revisão antes de serem aplicadas.
+
+Na primeira execução, o Copaiba pode preparar o runtime e baixar os modelos necessários. É preciso ter acesso à internet para essa etapa. A ferramenta usa um serviço local em `127.0.0.1:8765`; o suporte está disponível no aplicativo desktop.
+
+Para aliases japoneses, informe kana ou romaji. Para outros idiomas, use fonemas separados por espaço no alias. Confira as propostas na waveform, pois o alinhamento não determina sozinho todos os parâmetros específicos de cada banco.
+
+## Versões e lançamentos
+
+| Versão | Codinome | Data | Situação | Notas |
+| --- | --- | --- | --- | --- |
+| [`v0.246.0`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v0.246.0) | Damasco | 21/10/2026 | Release atual | [Notas](changelog.md#v246-damasco---2026-10-21) |
+| [`v201`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v201) | Carambola | 10/05/2026 | Release | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v201) |
+| [`v190`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v190) | Bergamota | 11/04/2026 | Release | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v190) |
+| [`v150_Canary`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v150_Canary) | Abacaxi | 26/03/2026 | Canary | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v150_Canary) |
+| [`v140_Canary`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v140_Canary) | — | 25/03/2026 | Canary | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v140_Canary) |
+| [`v120_Canary`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v120_Canary) | — | 24/03/2026 | Canary | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v120_Canary) |
+
+Veja o [histórico completo de alterações](changelog.md) e os [lançamentos no GitHub](https://github.com/studiopomar/Copaiba-NEO/releases).
+
+## Compilar a partir do código
+
+É necessário ter uma instalação recente do Rust. Para executar a versão desktop:
+
+```sh
+cargo run --release
+```
+
+Para compilar sem executar:
+
+```sh
+cargo build --release
+```
+
+## Contribuir e reportar problemas
+
+Abra uma [issue](https://github.com/studiopomar/Copaiba-NEO/issues) para relatar um defeito ou sugerir uma melhoria. Ao reportar um problema, inclua o sistema operacional, a versão do Copaiba, os passos para reproduzi-lo e, quando possível, um exemplo mínimo do `oto.ini` afetado.
+
+## Star History
+
+[![Histórico de estrelas do Copaiba NEO](https://api.star-history.com/svg?repos=studiopomar/Copaiba-NEO&type=Date)](https://star-history.com/#studiopomar/Copaiba-NEO&Date)
+
+## Créditos e licença
+
+- **Desenvolvimento:** xiao e HAI-D.
+- **Garantia de qualidade:** Zone e Makki.
+- **Ícone:** Mori-P.
+- **Alinhamento Auto-Oto:** [mVocalToolkit](https://github.com/Megageorgio/mVocalToolkit).
+
+O pacote declara a licença MIT em [`Cargo.toml`](Cargo.toml). Consulte também os termos de cada ferramenta externa e dos modelos baixados.

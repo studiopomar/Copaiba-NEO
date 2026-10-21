@@ -1,5 +1,33 @@
 # Changelog
 
+## [v246 Damasco] - 2026-10-21
+
+### English
+
+#### Added
+- Auto-Oto proposals powered by the local mVocalToolkit service, with review and selective application to `oto.ini` entries.
+- Arabic font support and right-to-left interface layout, alongside Portuguese and English localization.
+- A refreshed responsive interface with clearer navigation, larger editing panels, and improved table and waveform readability.
+- A credits window linking to mVocalToolkit.
+
+#### Changed
+- Replaced the former RMS-only Auto-Oto action with the mVocalToolkit alignment workflow.
+- Reorganized Auto-Oto controls and proposal list to fit different window sizes.
+
+### Português
+
+#### Adicionados
+- Propostas de Auto-Oto com o serviço local mVocalToolkit, com revisão e aplicação seletiva das alterações no `oto.ini`.
+- Fonte árabe e disposição RTL da interface, junto às traduções em português e inglês.
+- Interface responsiva reorganizada, com navegação mais clara e mais espaço para a tabela e a waveform.
+- Janela de créditos com link para o mVocalToolkit.
+
+#### Alterados
+- Substituição do Auto-Oto baseado apenas em RMS pelo fluxo de alinhamento do mVocalToolkit.
+- Ajuste dos controles e da lista de propostas do Auto-Oto para diferentes tamanhos de janela.
+
+---
+
 ## [v201 Carambola] - 2026-05-10
 
 ### English
