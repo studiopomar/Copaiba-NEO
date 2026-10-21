@@ -4,23 +4,31 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_alias_table(&mut self, ctx: &egui::Context) {
-        let side = if self.config.table_on_right { egui::SidePanel::right("alias_sidebar") } else { egui::SidePanel::left("alias_sidebar") };
+        let table_on_right = self.config.table_on_right ^ self.is_rtl();
+        let is_rtl = self.is_rtl();
+        let side = if table_on_right { egui::SidePanel::right("alias_sidebar") } else { egui::SidePanel::left("alias_sidebar") };
         let screen_width = ctx.screen_rect().width();
         side.resizable(true)
-            .default_width(if screen_width < 600.0 { screen_width * 0.92 } else { 420.0 })
-            .min_width(if screen_width < 600.0 { 150.0 } else { 200.0 })
-            .max_width(if screen_width < 600.0 { screen_width * 0.96 } else { screen_width * 0.7 })
+            .default_width(if screen_width < 600.0 { screen_width * 0.92 } else { 560.0 })
+            .min_width(if screen_width < 600.0 { 150.0 } else { 430.0 })
+            .max_width(if screen_width < 600.0 { screen_width * 0.96 } else { screen_width * 0.72 })
             .show(ctx, |ui| {
                 let mut play_sound = false;
                 let mut flip_side = false;
                 let (current_sel, current_focus_col, multi_sel, filtered) = {
                     let tab = self.cur_mut();
-                    ui.horizontal(|ui| {
-                        ui.strong(format!("{} ({}/{})", tr!("table.params"), tab.filtered.len(), tab.entries.len()));
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    egui::Frame::new()
+                        .fill(ui.visuals().faint_bg_color)
+                        .inner_margin(egui::Margin::symmetric(12, 9))
+                        .corner_radius(egui::CornerRadius::same(8))
+                        .show(ui, |ui| {
+                        crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                        crate::app::design::section_title(ui, is_rtl, tr!("table.params").to_string(), format!("{} / {}", tab.filtered.len(), tab.entries.len()));
+                        ui.with_layout(if is_rtl { egui::Layout::left_to_right(egui::Align::Center) } else { egui::Layout::right_to_left(egui::Align::Center) }, |ui| {
                             if ui.button("⇄").on_hover_text("Trocar lado da janela").clicked() {
                                 flip_side = true;
                             }
+                        });
                         });
                     });
                     ui.separator();
@@ -33,13 +41,23 @@ impl CopaibaApp {
 
                 let mut new_sel = None;
                 let panel_width = ui.available_width();
+                let selected_entry_index = filtered.get(current_sel).copied();
+                let scroll_stamp = selected_entry_index.map(|entry_index| {
+                    (self.current_tab, self.cur().oto_path.clone(), entry_index)
+                });
+                let scroll_stamp_id = egui::Id::new("alias_table_last_scrolled_selection");
+                let should_scroll_selected = match &scroll_stamp {
+                    Some(stamp) => ctx.data(|data| data.get_temp::<(usize, Option<std::path::PathBuf>, usize)>(scroll_stamp_id)) != Some(stamp.clone()),
+                    None => false,
+                };
+                let mut requested_selection_scroll = false;
 
                 // Adaptive column widths based on panel width
                 let use_compact = panel_width < 380.0;
                 let (w_chk, w_file, w_alias, w_num) = if use_compact {
-                    (20.0, 60.0, 50.0, 42.0)
+                    (24.0, 78.0, 68.0, 48.0)
                 } else {
-                    (24.0, 90.0, 80.0, 55.0)
+                    (28.0, 112.0, 100.0, 58.0)
                 };
 
                 // Track batch delta edits: (field_index, delta)
@@ -48,10 +66,11 @@ impl CopaibaApp {
                 let has_multi = multi_sel.len() > 1;
 
                 egui::ScrollArea::vertical().id_salt("alias_vscroll").show(ui, |ui| {
+                    ui.spacing_mut().item_spacing = egui::vec2(4.0, 4.0);
                     TableBuilder::new(ui)
                         .striped(true)
                         .resizable(true)
-                        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                        .cell_layout(if is_rtl { egui::Layout::right_to_left(egui::Align::Center) } else { egui::Layout::left_to_right(egui::Align::Center) })
                         .column(Column::exact(w_chk))                       // Done ✔
                         .column(Column::initial(w_file).at_least(40.0).clip(true))  // Filename
                         .column(Column::initial(w_alias).at_least(35.0).clip(true)) // Alias
@@ -60,7 +79,7 @@ impl CopaibaApp {
                         .column(Column::initial(w_num).at_least(35.0))      // Preutterance
                         .column(Column::initial(w_num).at_least(35.0))      // Consonant
                         .column(Column::initial(w_num).at_least(35.0))      // Cutoff
-                        .header(22.0, |mut header| {
+                        .header(crate::app::design::TABLE_HEADER_HEIGHT, |mut header| {
                             header.col(|ui| { ui.strong("✔"); });
                             header.col(|ui| { let h = tr!("table.col.file"); ui.strong(if use_compact { "File".to_string() } else { h }); });
                             header.col(|ui| { let h = tr!("table.col.alias"); ui.strong(if use_compact { "Alias".to_string() } else { h }); });
@@ -71,7 +90,7 @@ impl CopaibaApp {
                             header.col(|ui| { ui.strong("CUT"); });
                         })
                         .body(|body| {
-                            body.rows(22.0, filtered.len(), |mut row| {
+                            body.rows(crate::app::design::TABLE_ROW_HEIGHT, filtered.len(), |mut row| {
                                 let fi = row.index();
                                 let idx = filtered[fi];
                                 let is_selected = fi == current_sel;
@@ -79,10 +98,13 @@ impl CopaibaApp {
 
                                 let tab = self.cur_mut();
                                 if let Some(entry) = tab.entries.get_mut(idx) {
-                                    row.set_selected(in_multi);
+                                    row.set_selected(in_multi || is_selected);
 
                                     row.col(|ui| {
-                                        if is_selected { ui.scroll_to_cursor(Some(egui::Align::Center)); }
+                                        if is_selected && should_scroll_selected {
+                                            ui.scroll_to_cursor(Some(egui::Align::Center));
+                                            requested_selection_scroll = true;
+                                        }
                                         let id = egui::Id::new(("cell", fi, 0));
                                         let resp = ui.push_id(id, |ui| ui.checkbox(&mut entry.done, "")).response;
                                         if resp.changed() { 
@@ -137,6 +159,11 @@ impl CopaibaApp {
                             });
                         });
                 });
+                if requested_selection_scroll {
+                    if let Some(stamp) = scroll_stamp {
+                        ctx.data_mut(|data| data.insert_temp(scroll_stamp_id, stamp));
+                    }
+                }
 
                 // Apply batch delta to all other selected entries
                 if let Some((field_idx, delta)) = batch_delta {

@@ -78,6 +78,14 @@ O Copaiba já vem com uma suíte de plugins poderosos instalados:
 
 ### Análise
 
+**Auto-oto com mVocalToolkit**
+- Usa o serviço local do mVocalToolkit para alinhar os fonemas dos WAVs selecionados.
+- Mostra propostas de Offset, Cutoff, Preutterance, Consonant e Overlap antes de alterar o `oto.ini`.
+- Escolhe automaticamente um modelo compatível com o idioma e baixa os recursos necessários sob demanda.
+- Ao abrir o diálogo, o Copaiba inicia o serviço local ou reutiliza uma instância existente. Se necessário, prepara o runtime com `uv`; os modelos e engines são baixados sob demanda na primeira análise.
+- Para aliases japoneses, use kana ou romaji. Nos demais idiomas, escreva os fonemas separados por espaço no alias. Confira cada proposta na waveform; o alinhador não escolhe sozinho todos os parâmetros específicos do `oto.ini`.
+- O serviço local fica em `http://127.0.0.1:8765` e é encerrado pelo Copaiba ao fechar o aplicativo, quando foi iniciado por ele.
+
 **Colheita - Análise de Pitch**
 - Analisa a frequência fundamental (F0) do áudio em tempo real.
 - Exibe o valor em Hz e a nota musical correspondente (ex: C3, G4) no segmento analisado.

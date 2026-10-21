@@ -3,6 +3,7 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_pmap_editor(&mut self, ctx: &egui::Context) {
+        let is_rtl = self.is_rtl();
         let mut window_open = self.ui.show_pmap_editor;
         if !window_open { return; }
 
@@ -21,7 +22,7 @@ impl CopaibaApp {
 
                 // Search and Batch controls
                 ui.group(|ui| {
-                    ui.horizontal(|ui| {
+                    crate::app::layout::horizontal(ui, is_rtl, |ui| {
                         ui.label("🔍");
                         ui.add(egui::TextEdit::singleline(&mut self.ui.pmap_search_query)
                             .hint_text("Search pitch...")
@@ -55,7 +56,7 @@ impl CopaibaApp {
                     });
 
                     ui.add_space(4.0);
-                    ui.horizontal(|ui| {
+                    crate::app::layout::horizontal(ui, is_rtl, |ui| {
                         if ui.button("Select All").clicked() {
                             let query = self.ui.pmap_search_query.to_lowercase();
                             for e in &mut self.cur_mut().prefix_map {
@@ -93,19 +94,19 @@ impl CopaibaApp {
                 egui_extras::TableBuilder::new(ui)
                     .striped(true)
                     .resizable(true)
-                    .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                    .cell_layout(if is_rtl { egui::Layout::right_to_left(egui::Align::Center) } else { egui::Layout::left_to_right(egui::Align::Center) })
                     .column(egui_extras::Column::auto()) // ✔
                     .column(egui_extras::Column::initial(60.0)) // Pitch
                     .column(egui_extras::Column::remainder()) // Prefix
                     .column(egui_extras::Column::remainder()) // Suffix
-                    .header(20.0, |mut header| {
+                    .header(30.0, |mut header| {
                         header.col(|ui| { ui.strong("✔"); });
                         header.col(|ui| { ui.strong("Pitch"); });
                         header.col(|ui| { ui.strong("Prefix"); });
                         header.col(|ui| { ui.strong("Suffix"); });
                     })
                     .body(|body| {
-                        body.rows(22.0, pmap_indices.len(), |mut row| {
+                        body.rows(30.0, pmap_indices.len(), |mut row| {
                             let idx = pmap_indices[row.index()];
                             let tab = &mut self.tabs[tab_idx];
                             if let Some(entry) = tab.prefix_map.get_mut(idx) {
@@ -119,10 +120,10 @@ impl CopaibaApp {
                                     ui.label(label);
                                 });
                                 row.col(|ui| {
-                                    ui.add(egui::TextEdit::singleline(&mut entry.prefix).font(egui::FontId::monospace(10.0)));
+                                    ui.add(egui::TextEdit::singleline(&mut entry.prefix).font(egui::FontId::monospace(12.0)));
                                 });
                                 row.col(|ui| {
-                                    ui.add(egui::TextEdit::singleline(&mut entry.suffix).font(egui::FontId::monospace(10.0)));
+                                    ui.add(egui::TextEdit::singleline(&mut entry.suffix).font(egui::FontId::monospace(12.0)));
                                 });
                             }
                         });
@@ -130,14 +131,14 @@ impl CopaibaApp {
 
                 // Bottom buttons
                 ui.separator();
-                ui.horizontal(|ui| {
+                crate::app::layout::horizontal(ui, is_rtl, |ui| {
                     if ui.add_enabled(is_dirty, egui::Button::new(RichText::new("💾 Save Changes").strong())).clicked() {
                         save_clicked = true;
                     }
                     if ui.add_enabled(is_dirty, egui::Button::new("✖ Cancel")).clicked() {
                         cancel_clicked = true;
                     }
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.with_layout(if is_rtl { egui::Layout::left_to_right(egui::Align::Center) } else { egui::Layout::right_to_left(egui::Align::Center) }, |ui| {
                         if ui.button("Close").clicked() {
                             close_window = true;
                         }

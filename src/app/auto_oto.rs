@@ -1,179 +1,127 @@
-use serde::{Serialize, Deserialize};
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct AutoOtoSettings {
-    pub noise_floor_db: f32,
-    pub min_silence_ms: f64, // minimal length of silence to trim
-    pub margin_ms: f64,      // padding to leave before offset / after cutoff
-}
-
-impl Default for AutoOtoSettings {
-    fn default() -> Self {
-        Self {
-            noise_floor_db: -40.0,
-            min_silence_ms: 30.0,
-            margin_ms: 10.0,
-        }
-    }
-}
-
-pub struct AutoOtoResult {
-    pub offset: f64,
-    pub consonant: f64,
-    pub cutoff: f64, // typically negative (distance from end)
-    pub preutterance: f64,
-    pub overlap: f64,
-}
-
-pub fn compute_auto_oto(samples: &[f32], sample_rate: u32, settings: &AutoOtoSettings) -> Option<AutoOtoResult> {
-    if samples.is_empty() { return None; }
-    
-    // Window size (e.g. 5ms)
-    let window_ms = 5.0;
-    let window_size = ((window_ms / 1000.0) * sample_rate as f64) as usize;
-    if window_size == 0 { return None; }
-    
-    // Calculate RMS profile
-    let mut rms_profile = Vec::with_capacity(samples.len() / window_size + 1);
-    let mut max_rms = 0.0_f32;
-    
-    let mut i = 0;
-    while i + window_size <= samples.len() {
-        let chunk = &samples[i..i+window_size];
-        let sum_sq: f32 = chunk.iter().map(|&s| s * s).sum();
-        let rms = (sum_sq / window_size as f32).sqrt();
-        rms_profile.push((i, rms));
-        max_rms = max_rms.max(rms);
-        i += window_size;
-    }
-    
-    if rms_profile.is_empty() { return None; }
-    
-    let total_dur_ms = (samples.len() as f64 / sample_rate as f64) * 1000.0;
-    
-    // Convert DB to amplitude threshold
-    // Let's assume max_rms is 0 dB reference or 1.0 is 0 dB?
-    // Standard approach: 20 * log10(amplitude)
-    let threshold_amp = 10.0_f32.powf(settings.noise_floor_db / 20.0);
-    
-    // 1. Find Offset (Search forward)
-    let mut offset_ms = 0.0;
-    for &(idx, rms) in &rms_profile {
-        if rms > threshold_amp {
-            let found_ms = (idx as f64 / sample_rate as f64) * 1000.0;
-            offset_ms = (found_ms - settings.margin_ms).max(0.0);
-            break;
-        }
-    }
-    
-    // 2. Find Cutoff (Search backward)
-    let mut cutoff_abs_ms = total_dur_ms;
-    for &(idx, rms) in rms_profile.iter().rev() {
-        if rms > threshold_amp {
-            let found_ms = ((idx + window_size) as f64 / sample_rate as f64) * 1000.0;
-            cutoff_abs_ms = (found_ms + settings.margin_ms).min(total_dur_ms);
-            break;
-        }
-    }
-    
-    let mut cutoff = -(total_dur_ms - cutoff_abs_ms);
-    if cutoff.abs() < settings.min_silence_ms {
-        cutoff = 0.0; // Don't cutoff if trailing silence is too small
-    }
-    
-    // 3. Find Vowel start (Preutterance & Consonant)
-    // Heuristic: The vowel starts around the highest derivative of energy or when energy reaches 50% of max.
-    let vowel_threshold = max_rms * 0.4;
-    let mut vowel_start_ms = offset_ms;
-    for &(idx, rms) in &rms_profile {
-        let current_ms = (idx as f64 / sample_rate as f64) * 1000.0;
-        if current_ms > offset_ms && rms > vowel_threshold {
-            vowel_start_ms = current_ms;
-            break;
-        }
-    }
-    
-    let preutterance = (vowel_start_ms - offset_ms).max(10.0); // at least 10ms
-    let consonant = preutterance + 20.0; // Safe default for CV: 20ms past preutterance
-    
-    // 4. Overlap
-    let overlap = (preutterance / 2.0).clamp(5.0, 30.0);
-
-    Some(AutoOtoResult {
-        offset: offset_ms,
-        consonant,
-        cutoff,
-        preutterance,
-        overlap,
-    })
-}
-
 impl crate::app::CopaibaApp {
-    pub fn apply_auto_oto_to_selection(&mut self) {
-        let settings = self.auto_oto_settings.clone();
-        
-        // Find indices to process
-        let indices_to_process = {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn start_mvt_auto_oto(&mut self) {
+        self.mvt_auto_oto.source_oto_path = self.cur().oto_path.clone();
+        let selected_indices: std::collections::HashSet<usize> = {
             let tab = self.cur();
             if tab.multi_selection.is_empty() {
-                if let Some(sel) = tab.filtered.get(tab.selected).copied() {
-                    vec![sel]
-                } else {
-                    Vec::new()
-                }
+                tab.filtered.get(tab.selected).copied().into_iter().collect()
             } else {
                 tab.multi_selection.iter().copied().collect()
             }
         };
+        let Some(dir) = self.cur().oto_dir.clone() else {
+            self.mvt_auto_oto.status = "Abra um oto.ini com os WAVs acessíveis no disco.".into();
+            return;
+        };
+        let japanese = self.config.mvt_auto_oto.language.to_lowercase().starts_with("ja");
+        let scheme = self.config.mvt_auto_oto.oto_scheme;
+        let selected_files: std::collections::HashSet<String> = {
+            let tab = self.cur();
+            selected_indices.iter().filter_map(|index| tab.entries.get(*index))
+                .map(|entry| entry.filename.clone()).collect()
+        };
+        let items = {
+            let tab = self.cur();
+            tab.entries.iter().enumerate().filter_map(|(index, entry)| {
+                if !selected_files.contains(&entry.filename) { return None; }
+                let stem = std::path::Path::new(&entry.filename).file_stem().and_then(|s| s.to_str()).unwrap_or("");
+                let filename_alias = entry.alias.trim() == stem;
+                let segmented_japanese_stem = japanese && filename_alias
+                    && stem.split('_').filter(|part| !part.is_empty()).count() >= 2
+                    && stem.chars().all(|ch| ch == '_' || ch.is_ascii_alphabetic());
+                let inferred_vcv = crate::app::mvt_auto_oto::looks_like_vcv_alias(&entry.alias)
+                    && !crate::app::mvt_auto_oto::looks_like_vc_alias(&entry.alias);
+                let inferred_vc = crate::app::mvt_auto_oto::looks_like_vc_alias(&entry.alias);
+                let (vcv_style, vc_style) = match scheme {
+                    crate::app::mvt_auto_oto::MvtOtoScheme::Cv => (false, false),
+                    crate::app::mvt_auto_oto::MvtOtoScheme::Vcv => (true, false),
+                    crate::app::mvt_auto_oto::MvtOtoScheme::Cvvc => (false, inferred_vc),
+                    crate::app::mvt_auto_oto::MvtOtoScheme::Mixed => (inferred_vcv, inferred_vc),
+                };
+                let generate_vcv_units = segmented_japanese_stem;
+                Some(crate::app::mvt_auto_oto::MvtWorkItem {
+                    entry_index: index,
+                    path: dir.join(&entry.filename),
+                    filename: entry.filename.clone(),
+                    alias: entry.alias.clone(),
+                    propose: selected_indices.contains(&index),
+                    offset_ms: entry.offset,
+                    preutter_ms: entry.preutter,
+                    vcv_style: vcv_style || generate_vcv_units,
+                    vc_style,
+                    generate_vcv_units,
+                    scheme,
+                })
+            }).collect()
+        };
+        let mut settings = self.config.mvt_auto_oto.clone();
+        settings.refine_model.clear();
+        crate::app::mvt_auto_oto::start_analysis(settings, items, &mut self.mvt_auto_oto);
+    }
 
-        if indices_to_process.is_empty() { return; }
-
-        let mut processed_any = false;
-        
-        for idx in indices_to_process {
-            let (full_path, fname) = {
-                let tab = self.cur();
-                if let Some(entry) = tab.entries.get(idx) {
-                    let fname = entry.filename.clone();
-                    let full_path = tab.oto_dir.as_ref()
-                        .map(|d| d.join(&fname).to_string_lossy().to_string())
-                        .unwrap_or(fname.clone());
-                    (full_path, fname)
-                } else {
+    pub fn apply_mvt_auto_oto_proposals(&mut self) {
+        if self.mvt_auto_oto.source_oto_path.as_ref() != self.cur().oto_path.as_ref() {
+            self.mvt_auto_oto.status = "As propostas pertencem a outro oto.ini. Analise novamente a seleção desta aba.".into();
+            return;
+        }
+        let proposals = self.mvt_auto_oto.proposals.clone();
+        if !proposals.iter().any(|p| p.selected && (p.values.is_some() || p.proposed_alias.is_some())) { return; }
+        self.save_undo_state();
+        let (applied, first_added_index) = {
+            let tab = self.cur_mut();
+            let mut applied = 0usize;
+            let mut first_added_index = None;
+            for proposal in proposals.iter().filter(|p| p.selected) {
+                if proposal.new_entry {
+                    let (Some(alias), Some(values)) = (&proposal.proposed_alias, proposal.values) else { continue; };
+                    if tab.entries.iter().any(|entry| entry.filename == proposal.filename && entry.alias == *alias) { continue; }
+                    let line_index = tab.entries.iter().map(|entry| entry.line_index).max().unwrap_or(0).saturating_add(1);
+                    tab.entries.push(crate::oto::OtoEntry {
+                        filename: proposal.filename.clone(),
+                        alias: alias.clone(),
+                        offset: values.offset,
+                        consonant: values.consonant,
+                        cutoff: values.cutoff,
+                        preutter: values.preutter,
+                        overlap: values.overlap,
+                        line_index,
+                        done: false,
+                        notes: String::new(),
+                    });
+                    first_added_index.get_or_insert(tab.entries.len() - 1);
+                    applied += 1;
                     continue;
                 }
-            };
-
-            // Needs WAV data
-            let mut wav_opt = self.wav_cache.get(&full_path).cloned();
-            
-            // If not cached, try to load blocking (may be slow but ok for MVP)
-            if wav_opt.is_none() {
-                if let Some(tab_dir) = self.cur().oto_dir.as_ref() {
-                    let path = tab_dir.join(&fname);
-                    if let Ok(wav_with_spec) = crate::audio::load_wav(&path) {
-                        wav_opt = Some(wav_with_spec.wav);
-                    }
+                let Some(entry) = tab.entries.get_mut(proposal.entry_index) else { continue; };
+                if entry.filename != proposal.filename || entry.alias != proposal.alias { continue; }
+                let mut changed = false;
+                if let Some(alias) = &proposal.proposed_alias {
+                    if entry.alias != *alias { entry.alias = alias.clone(); changed = true; }
+                }
+                if let Some(values) = proposal.values {
+                    if proposal.apply_fields[0] { entry.offset = values.offset; }
+                    if proposal.apply_fields[1] { entry.consonant = values.consonant; }
+                    if proposal.apply_fields[2] { entry.cutoff = values.cutoff; }
+                    if proposal.apply_fields[3] { entry.preutter = values.preutter; }
+                    if proposal.apply_fields[4] { entry.overlap = values.overlap; }
+                    changed = true;
+                }
+                if changed { applied += 1; }
+            }
+            if applied > 0 { tab.dirty = true; }
+            (applied, first_added_index)
+        };
+        if applied > 0 {
+            self.cur_mut().multi_selection.clear();
+            self.rebuild_filter();
+            if let Some(raw_index) = first_added_index {
+                if let Some(filtered_index) = self.cur().filtered.iter().position(|&index| index == raw_index) {
+                    self.cur_mut().multi_selection.insert(filtered_index);
+                    self.select_filtered(filtered_index);
                 }
             }
-
-            if let Some(wav) = wav_opt {
-                if let Some(oto_res) = compute_auto_oto(&wav.samples, wav.sample_rate, &settings) {
-                    let tab = self.cur_mut();
-                    if let Some(entry) = tab.entries.get_mut(idx) {
-                        entry.offset = oto_res.offset;
-                        entry.consonant = oto_res.consonant;
-                        entry.cutoff = oto_res.cutoff;
-                        entry.preutter = oto_res.preutterance;
-                        entry.overlap = oto_res.overlap;
-                        processed_any = true;
-                    }
-                }
-            }
-        }
-        
-        if processed_any {
-            let msg = format!("{} (Auto-Oto)", egui_i18n::tr!("modal.batch.edit.status.success"));
+            let msg = format!("Propostas do mVocalToolkit aplicadas a {applied} entrada(s). Revise e salve o oto.ini.");
             self.ui.toast_manager.success(msg.clone());
             self.ui.status = msg;
         }

@@ -55,7 +55,7 @@ pub fn run() -> eframe::Result {
 
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
-                .with_title("Copaiba NEO v201 Carambola")
+                .with_title("Copaiba NEO v246 - Damasco")
                 .with_inner_size([1280.0, 720.0])
                 .with_min_inner_size([360.0, 300.0])
                 .with_icon(icon_data.unwrap_or_default()),
@@ -64,7 +64,7 @@ pub fn run() -> eframe::Result {
         };
 
         eframe::run_native(
-            "Copaiba NEO v201 Carambola",
+            "Copaiba NEO v246 - Damasco",
             options,
             Box::new(|cc| {
                 Ok(setup_app_box(cc, args))
@@ -139,7 +139,7 @@ fn android_main(app: android_activity::AndroidApp) {
     };
 
     eframe::run_native(
-        "Copaiba NEO v201 Carambola",
+        "Copaiba NEO v246 - Damasco",
         options,
         Box::new(|cc| {
             Ok(setup_app_box(cc))
@@ -170,13 +170,18 @@ fn reshape_egl_arabic(egl: &str) -> String {
 
 fn setup_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
-    #[cfg(target_arch = "wasm32")]
-    {
-        let data = include_bytes!("assets/fonts/NotoSansJP-Regular.ttf").to_vec();
-        fonts.font_data.insert("web_cjk_font".to_owned(), Arc::new(egui::FontData::from_owned(data)));
-        fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "web_cjk_font".to_owned());
-        fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().insert(0, "web_cjk_font".to_owned());
-    }
+    // Bundle a CJK fallback on every target. System font paths are not
+    // portable (notably on macOS), and missing glyphs render as squares.
+    let data = include_bytes!("assets/fonts/NotoSansJP-Regular.ttf").to_vec();
+    fonts.font_data.insert("bundled_cjk_font".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+    fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "bundled_cjk_font".to_owned());
+    fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().insert(0, "bundled_cjk_font".to_owned());
+    // Arabic fallback must be bundled too: system font paths are unavailable
+    // in the browser and vary across desktop platforms (especially macOS).
+    let arabic_data = include_bytes!("assets/fonts/Amiri-Regular.ttf").to_vec();
+    fonts.font_data.insert("bundled_arabic_font".to_owned(), Arc::new(egui::FontData::from_owned(arabic_data)));
+    fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().push("bundled_arabic_font".to_owned());
+    fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().push("bundled_arabic_font".to_owned());
     #[cfg(not(target_arch = "wasm32"))]
     {
         let system_fonts = [
@@ -272,54 +277,67 @@ pub fn apply_theme(ctx: &egui::Context, theme: AppTheme) {
 
 pub fn apply_light_theme(ctx: &egui::Context) {
     let mut visuals = egui::Visuals::light();
-    visuals.panel_fill = Color32::from_rgb(245, 245, 250);
-    visuals.window_fill = Color32::from_rgb(255, 255, 255);
-    visuals.extreme_bg_color = Color32::from_rgb(235, 235, 240);
-    visuals.faint_bg_color = Color32::from_rgb(240, 240, 245);
-    visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(235, 235, 240);
-    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.inactive.bg_fill = Color32::from_rgb(220, 220, 225);
-    visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.hovered.bg_fill = Color32::from_rgb(210, 210, 220);
-    visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.active.bg_fill = Color32::from_rgb(180, 160, 220);
-    visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);
-    visuals.override_text_color = Some(Color32::from_rgb(30, 30, 46));
-    visuals.hyperlink_color = Color32::from_rgb(50, 100, 200);
-    visuals.selection.bg_fill = Color32::from_rgb(200, 180, 255);
-    visuals.selection.stroke = Stroke::new(1.0, Color32::from_rgb(100, 120, 240));
+    visuals.panel_fill = Color32::from_rgb(246, 244, 250);
+    visuals.window_fill = Color32::from_rgb(255, 254, 255);
+    visuals.extreme_bg_color = Color32::from_rgb(250, 248, 252);
+    visuals.faint_bg_color = Color32::from_rgb(241, 237, 247);
+    visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(241, 237, 247);
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(224, 216, 235));
+    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.inactive.bg_fill = Color32::from_rgb(247, 244, 250);
+    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(220, 211, 232));
+    visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.hovered.bg_fill = Color32::from_rgb(237, 227, 248);
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(184, 157, 218));
+    visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.active.bg_fill = Color32::from_rgb(220, 201, 241);
+    visuals.widgets.active.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(151, 115, 192));
+    visuals.widgets.active.corner_radius = egui::CornerRadius::same(9);
+    visuals.override_text_color = Some(Color32::from_rgb(43, 35, 55));
+    visuals.hyperlink_color = Color32::from_rgb(112, 72, 158);
+    visuals.selection.bg_fill = Color32::from_rgb(226, 211, 244);
+    visuals.selection.stroke = Stroke::new(1.0_f32, Color32::from_rgb(132, 91, 177));
     ctx.set_visuals(visuals);
     setup_common_style(ctx);
 }
 
 pub fn apply_dark_theme(ctx: &egui::Context) {
     let mut visuals = egui::Visuals::dark();
-    visuals.panel_fill = Color32::from_rgb(18, 18, 28);
-    visuals.window_fill = Color32::from_rgb(24, 24, 36);
-    visuals.extreme_bg_color = Color32::from_rgb(12, 12, 20);
-    visuals.faint_bg_color = Color32::from_rgb(24, 24, 36);
-    visuals.widgets.noninteractive.bg_fill = Color32::from_rgba_premultiplied(30, 30, 46, 200);
-    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.inactive.bg_fill = Color32::from_rgba_premultiplied(38, 38, 56, 220);
-    visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.hovered.bg_fill = Color32::from_rgba_premultiplied(50, 50, 72, 230);
-    visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(10);
-    visuals.widgets.active.bg_fill = Color32::from_rgba_premultiplied(70, 50, 110, 255);
-    visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);
-    visuals.override_text_color = Some(Color32::from_rgb(205, 214, 244));
-    visuals.hyperlink_color = Color32::from_rgb(137, 180, 250);
-    visuals.selection.bg_fill = Color32::from_rgb(70, 50, 120);
-    visuals.selection.stroke = Stroke::new(1.0, Color32::from_rgb(137, 180, 250));
+    visuals.panel_fill = Color32::from_rgb(23, 20, 30);
+    visuals.window_fill = Color32::from_rgb(31, 27, 40);
+    visuals.extreme_bg_color = Color32::from_rgb(17, 15, 23);
+    visuals.faint_bg_color = Color32::from_rgb(31, 27, 40);
+    visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(37, 32, 47);
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(60, 51, 74));
+    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.inactive.bg_fill = Color32::from_rgb(44, 38, 55);
+    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(72, 60, 87));
+    visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.hovered.bg_fill = Color32::from_rgb(58, 47, 72);
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(131, 99, 164));
+    visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(9);
+    visuals.widgets.active.bg_fill = Color32::from_rgb(77, 55, 102);
+    visuals.widgets.active.bg_stroke = Stroke::new(1.0_f32, Color32::from_rgb(171, 132, 207));
+    visuals.widgets.active.corner_radius = egui::CornerRadius::same(9);
+    visuals.override_text_color = Some(Color32::from_rgb(232, 224, 241));
+    visuals.hyperlink_color = Color32::from_rgb(195, 157, 226);
+    visuals.selection.bg_fill = Color32::from_rgb(76, 55, 99);
+    visuals.selection.stroke = Stroke::new(1.0_f32, Color32::from_rgb(194, 158, 226));
     ctx.set_visuals(visuals);
     setup_common_style(ctx);
 }
 
 fn setup_common_style(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
-    style.spacing.interact_size.y = 12.0;
-    style.spacing.item_spacing = egui::Vec2::new(8.0, 6.0);
-    style.spacing.button_padding = egui::Vec2::new(10.0, 6.0);
-    style.spacing.window_margin = egui::Margin::same(12);
+    style.spacing.interact_size = egui::vec2(24.0, 28.0);
+    style.spacing.item_spacing = egui::Vec2::new(10.0, 8.0);
+    style.spacing.button_padding = egui::Vec2::new(12.0, 8.0);
+    style.spacing.window_margin = egui::Margin::same(18);
+    style.spacing.menu_margin = egui::Margin::same(10);
+    style.text_styles.insert(egui::TextStyle::Body, egui::FontId::proportional(14.0));
+    style.text_styles.insert(egui::TextStyle::Button, egui::FontId::proportional(14.0));
+    style.text_styles.insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
+    style.text_styles.insert(egui::TextStyle::Heading, egui::FontId::proportional(21.0));
     style.interaction.selectable_labels = false;
     ctx.set_style(style);
 }

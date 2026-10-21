@@ -4,7 +4,12 @@ use super::state::CopaibaApp;
 
 impl CopaibaApp {
     pub fn show_menu_bar(&mut self, ctx: &egui::Context) {
+        let is_rtl = self.is_rtl();
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+            ui.spacing_mut().interact_size.y = 30.0;
+            ui.spacing_mut().item_spacing.x = 8.0;
+            ui.add_space(2.0);
+            ui.with_layout(if is_rtl { egui::Layout::right_to_left(egui::Align::Center) } else { egui::Layout::left_to_right(egui::Align::Center) }, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button(tr!("menu.file"), |ui| {
                     if ui
@@ -281,6 +286,10 @@ impl CopaibaApp {
                         self.ui.show_help = true;
                         ui.close_menu();
                     }
+                    if ui.button("ⓘ Créditos do Copaiba").clicked() {
+                        self.ui.show_splash = true;
+                        ui.close_menu();
+                    }
                 });
 
                 ui.separator();
@@ -295,7 +304,7 @@ impl CopaibaApp {
                     self.ui.show_recorder = true;
                 }
 
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.with_layout(if is_rtl { egui::Layout::left_to_right(egui::Align::Center) } else { egui::Layout::right_to_left(egui::Align::Center) }, |ui| {
                     ui.label(
                         RichText::new("NEO")
                             .color(egui::Color32::from_rgb(140, 100, 200))
@@ -304,6 +313,8 @@ impl CopaibaApp {
                     ui.label(RichText::new("Copaiba").strong());
                 });
             });
+            });
+            ui.add_space(2.0);
         });
     }
 }

@@ -23,6 +23,7 @@ impl CopaibaApp {
         self.modal_readme(ctx);
         self.modal_license(ctx);
         self.modal_auto_oto(ctx);
+        self.modal_credits(ctx);
         self.modal_update_notification(ctx);
     }
 
@@ -141,7 +142,11 @@ impl CopaibaApp {
                             crate::apply_theme(ctx, self.config.theme);
                         }
                     });
-                    ui.checkbox(&mut self.config.table_on_right, "Tabela de parâmetros no lado direito");
+                    let is_rtl = self.is_rtl();
+                    let mut table_on_right = self.config.table_on_right ^ is_rtl;
+                    if ui.checkbox(&mut table_on_right, "Tabela de parâmetros no lado direito").changed() {
+                        self.config.table_on_right = table_on_right ^ is_rtl;
+                    }
                     ui.separator();
 
                     ui.heading(format!("🎬 {}", tr!("modal.settings.waveform.heading")));
@@ -343,7 +348,7 @@ impl CopaibaApp {
                     ui.label("F1"); ui.label(tr!("modal.shortcuts.label.shortcuts")); ui.end_row();
 
                     ui.strong(tr!("modal.shortcuts.label.table")); ui.label(""); ui.end_row();
-                    ui.label("Ctrl + A"); ui.label(tr!("modal.shortcuts.label.select_all")); ui.end_row();
+                    ui.label("⌘ / Ctrl + A"); ui.label(tr!("modal.shortcuts.label.select_all")); ui.end_row();
                     ui.label("Ctrl + D"); ui.label(tr!("modal.shortcuts.label.del_selection")); ui.end_row();
                     ui.label("Ctrl + I"); ui.label(tr!("modal.shortcuts.label.duplicate")); ui.end_row();
                     ui.label("Ctrl + M"); ui.label(tr!("modal.shortcuts.label.mark_done")); ui.end_row();
@@ -703,64 +708,43 @@ impl CopaibaApp {
         }
     }
 
-    fn show_splash_screen(&mut self, ctx: &egui::Context) {
+    fn modal_credits(&mut self, ctx: &egui::Context) {
         if !self.ui.show_splash { return; }
-
-        egui::Area::new(egui::Id::new("splash"))
-            .order(egui::Order::Foreground)
-            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+        let mut open = self.ui.show_splash;
+        let max_size = ctx.screen_rect().size() * 0.9;
+        egui::Window::new("Créditos do Copaiba")
+            .id(egui::Id::new("credits_modal"))
+            .open(&mut open)
+            .default_size([520.0_f32.min(max_size.x), 460.0_f32.min(max_size.y)])
+            .min_size([320.0_f32.min(max_size.x), 240.0_f32.min(max_size.y)])
+            .max_size(max_size)
             .show(ctx, |ui| {
-                let screen_rect = ui.ctx().screen_rect();
-                ui.painter().rect_filled(screen_rect, 0.0, egui::Color32::from_rgb(18, 18, 28));
-
-                ui.vertical_centered(|ui| {
-                    ui.add_space(screen_rect.height() * 0.3);
-                    ui.add(
-                        egui::Image::new(egui::include_image!("../../favicon_mori.png"))
-                            .max_width(180.0)
-                            .corner_radius(10)
-                    );
-                    ui.add_space(24.0);
-                    ui.heading(RichText::new("Copaiba NEO v201 Carambola").strong().size(36.0));
-                    ui.label(RichText::new("Oto.ini Editor").color(egui::Color32::from_gray(120)));
-                    ui.add_space(24.0);
-
-                    ui.label(RichText::new("Desenvolvedores / Coders").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
-                    ui.label(RichText::new("xiao (@dorayakito)\nHAI-D (@overdramatic)").size(13.0));
-                    ui.add_space(12.0);
-
-                    ui.label(RichText::new("Quality Assurance").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
-                    ui.label(RichText::new("Zone (@zoneryth)\nMakki (@maezono00)").size(13.0));
-                    ui.add_space(12.0);
-
-                    ui.label(RichText::new("Porta-voz nJokis").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
-                    ui.label(RichText::new("oneno-ren (@oneno-ren)").size(13.0));
-                    ui.add_space(12.0);
-
-                    ui.label(RichText::new("Ícone / Favicon").strong().size(14.0).color(egui::Color32::from_rgb(150, 150, 200)));
-                    ui.label(RichText::new("Mori-P (@pingolinhachan.com)").size(13.0));
-
-                    ui.add_space(32.0);
-
-                    let progress = (self.ui.splash_progress / 1.6).clamp(0.0, 1.0);
-                    ui.add(egui::ProgressBar::new(progress).desired_width(280.0).animate(true));
-                    ui.add_space(8.0);
-
-                    let messages = [
-                        "Coletando dados ...",
-                        "Carregando dados ...",
-                        "Gravando dados ...",
-                        "Sincronizando satélite ...",
-                        "Portando o bengue fengue xengue ...",
-                    ];
-                    let msg_idx = ((self.ui.splash_progress / (1.6_f32 / messages.len() as f32)) as usize).min(messages.len() - 1);
-                    ui.label(RichText::new(messages[msg_idx]).italics().size(12.0).color(egui::Color32::from_gray(100)));
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.heading(RichText::new("Copaiba NEO v246 - Damasco").strong());
+                    ui.label(RichText::new("Oto.ini Editor").color(ui.visuals().weak_text_color()));
+                    ui.add_space(16.0);
+                    ui.label(RichText::new("Desenvolvedores / Coders").strong());
+                    ui.label("xiao (@dorayakito)\nHAI-D (@overdramatic)");
+                    ui.add_space(10.0);
+                    ui.label(RichText::new("Quality Assurance").strong());
+                    ui.label("Zone (@zoneryth)\nMakki (@maezono00)");
+                    ui.add_space(10.0);
+                    ui.label(RichText::new("Porta-voz nJokis").strong());
+                    ui.label("oneno-ren (@oneno-ren)");
+                    ui.add_space(10.0);
+                    ui.label(RichText::new("Ícone / Favicon").strong());
+                    ui.label("Mori-P (@pingolinhachan.com)");
+                    ui.add_space(10.0);
+                    ui.label(RichText::new("Auto-Oto / Alinhamento").strong());
+                    ui.hyperlink_to("mVocalToolkit", "https://github.com/Megageorgio/mVocalToolkit");
                 });
             });
+        self.ui.show_splash = open;
     }
 
     fn modal_readme(&mut self, ctx: &egui::Context) {
         if !self.ui.show_readme { return; }
+        let is_rtl = self.is_rtl();
         let mut window_open = self.ui.show_readme;
         let tab_idx = self.current_tab;
         let mut save_clicked = false;
@@ -775,7 +759,7 @@ impl CopaibaApp {
                 let tab = &mut self.tabs[tab_idx];
                 let changed = tab.readme_text != tab.original_readme_text;
 
-                ui.vertical(|ui| {
+                crate::app::layout::vertical(ui, is_rtl, |ui| {
                     ui.group(|ui| {
                         egui::ScrollArea::vertical().id_salt("readme_edit_scroll").max_height(400.0).show(ui, |ui| {
                             ui.add(egui::TextEdit::multiline(&mut tab.readme_text)
@@ -785,14 +769,14 @@ impl CopaibaApp {
                     });
 
                     ui.add_space(8.0);
-                    ui.horizontal(|ui| {
+                    crate::app::layout::horizontal(ui, is_rtl, |ui| {
                         if ui.add_enabled(changed, egui::Button::new(RichText::new("💾 Save Changes").strong())).clicked() {
                             save_clicked = true;
                         }
                         if ui.add_enabled(changed, egui::Button::new("✖ Cancel")).clicked() {
                             cancel_clicked = true;
                         }
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.with_layout(if is_rtl { egui::Layout::left_to_right(egui::Align::Center) } else { egui::Layout::right_to_left(egui::Align::Center) }, |ui| {
                             if ui.button("Close").clicked() { close_window = true; }
                         });
                     });
@@ -836,39 +820,163 @@ impl CopaibaApp {
 
     fn modal_auto_oto(&mut self, ctx: &egui::Context) {
         if !self.ui.show_auto_oto { return; }
+        let is_rtl = self.is_rtl();
+        self.mvt_auto_oto.drain_events();
+        if self.mvt_auto_oto.running || self.mvt_auto_oto.refreshing_models { ctx.request_repaint_after(std::time::Duration::from_millis(120)); }
+        let previous_mvt_settings = self.config.mvt_auto_oto.clone();
+        let mut language_options = self.mvt_auto_oto.languages.clone();
+        if language_options.is_empty() {
+            language_options = [
+                ("en", "English", "English"), ("ja", "Japanese", "日本語"),
+                ("zh", "Chinese", "中文"), ("ru", "Russian", "Русский"),
+                ("ko", "Korean", "한국어"), ("pt", "Portuguese", "Português"),
+                ("es", "Spanish", "Español"), ("fr", "French", "Français"),
+                ("de", "German", "Deutsch"), ("it", "Italian", "Italiano"),
+            ].into_iter().map(|(code, name, native_name)| crate::app::mvt_auto_oto::MvtLanguage {
+                code: code.into(), name: name.into(), native_name: native_name.into(),
+            }).collect();
+        }
+        let current_language_label = language_options.iter()
+            .find(|language| language.code == self.config.mvt_auto_oto.language)
+            .map(|language| format!("{} ({})", language.native_name, language.code))
+            .unwrap_or_else(|| self.config.mvt_auto_oto.language.clone());
         let mut open = true;
+        let mut start_analysis = false;
+        let mut apply_proposals = false;
+
+        let screen_size = ctx.screen_rect().size();
+        let max_size = egui::vec2(screen_size.x * 0.94, screen_size.y * 0.9);
+        let min_size = egui::vec2(440.0_f32.min(max_size.x), 360.0_f32.min(max_size.y));
 
         egui::Window::new(format!("🔬 {}", tr!("modal.auto_oto.window.name")))
             .id(egui::Id::new("auto_oto_modal"))
             .open(&mut open)
-            .default_size([400.0, 300.0])
+            .default_size([760.0_f32.min(max_size.x), 560.0_f32.min(max_size.y)])
+            .min_size(min_size)
+            .max_size(max_size)
             .show(ctx, |ui| {
                 ui.label(tr!("modal.auto_oto.label.desc"));
                 ui.add_space(8.0);
-
-                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
-                    ui.label(tr!("modal.auto_oto.label.noise"));
-                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.noise_floor_db, -60.0_f32..=-10.0).suffix(" dB"));
+                crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                    ui.label(tr!("modal.auto_oto.label.language"));
+                    egui::ComboBox::from_id_salt("auto_oto_language")
+                        .selected_text(current_language_label)
+                        .width(150.0)
+                        .show_ui(ui, |ui| {
+                            for language in &language_options {
+                                ui.selectable_value(
+                                    &mut self.config.mvt_auto_oto.language,
+                                    language.code.clone(),
+                                    format!("{} ({})", language.native_name, language.code),
+                                );
+                            }
+                        });
                 });
-                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
+                crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                    ui.label(tr!("modal.auto_oto.label.scheme"));
+                    egui::ComboBox::from_id_salt("auto_oto_scheme")
+                        .selected_text(match self.config.mvt_auto_oto.oto_scheme {
+                            crate::app::mvt_auto_oto::MvtOtoScheme::Cv => tr!("modal.auto_oto.scheme.cv"),
+                            crate::app::mvt_auto_oto::MvtOtoScheme::Vcv => tr!("modal.auto_oto.scheme.vcv"),
+                            crate::app::mvt_auto_oto::MvtOtoScheme::Cvvc => tr!("modal.auto_oto.scheme.cvvc"),
+                            crate::app::mvt_auto_oto::MvtOtoScheme::Mixed => tr!("modal.auto_oto.scheme.mixed"),
+                        })
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut self.config.mvt_auto_oto.oto_scheme, crate::app::mvt_auto_oto::MvtOtoScheme::Cv, tr!("modal.auto_oto.scheme.cv"));
+                            ui.selectable_value(&mut self.config.mvt_auto_oto.oto_scheme, crate::app::mvt_auto_oto::MvtOtoScheme::Vcv, tr!("modal.auto_oto.scheme.vcv"));
+                            ui.selectable_value(&mut self.config.mvt_auto_oto.oto_scheme, crate::app::mvt_auto_oto::MvtOtoScheme::Cvvc, tr!("modal.auto_oto.scheme.cvvc"));
+                            ui.selectable_value(&mut self.config.mvt_auto_oto.oto_scheme, crate::app::mvt_auto_oto::MvtOtoScheme::Mixed, tr!("modal.auto_oto.scheme.mixed"));
+                        });
                     ui.label(tr!("modal.auto_oto.label.margin"));
-                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.margin_ms, 0.0..=50.0).suffix(" ms"));
+                    ui.add(egui::DragValue::new(&mut self.config.mvt_auto_oto.margin_ms).range(0.0..=100.0).suffix(" ms"));
                 });
-                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
-                    ui.label(tr!("modal.auto_oto.label.min_silence"));
-                    ui.add(egui::Slider::new(&mut self.auto_oto_settings.min_silence_ms, 0.0..=200.0).suffix(" ms"));
-                });
-
+                ui.label(tr!("modal.auto_oto.label.model_auto"));
+                ui.label(tr!("modal.auto_oto.label.alias_help"));
                 ui.add_space(16.0);
-                crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
-                    if ui.button(tr!("modal.auto_oto.btn.apply_selected")).clicked() {
-                        self.apply_auto_oto_to_selection();
-                        self.ui.show_auto_oto = false;
+                crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    if ui.add_enabled(!self.mvt_auto_oto.running && !self.mvt_auto_oto.refreshing_models, egui::Button::new(tr!("modal.auto_oto.btn.analyze"))).clicked() { start_analysis = true; }
+                    #[cfg(target_arch = "wasm32")]
+                    ui.label(tr!("modal.auto_oto.label.desktop_only"));
+                    if self.mvt_auto_oto.running || self.mvt_auto_oto.refreshing_models {
+                        if ui.button(tr!("modal.auto_oto.btn.cancel")).clicked() {
+                            if let Some(cancel) = &self.mvt_auto_oto.cancel { cancel.store(true, std::sync::atomic::Ordering::Relaxed); }
+                        }
                     }
+                    if ui.add_enabled(!self.mvt_auto_oto.proposals.is_empty() && !self.mvt_auto_oto.running, egui::Button::new(tr!("modal.auto_oto.btn.apply_selected"))).clicked() { apply_proposals = true; }
+                });
+                if self.mvt_auto_oto.running || self.mvt_auto_oto.refreshing_models {
+                    let progress_bar = if let Some(progress) = self.mvt_auto_oto.progress {
+                        egui::ProgressBar::new(progress).show_percentage()
+                    } else {
+                        // Startup and transcription can report no numeric progress.
+                        // Keep the bar moving without presenting a misleading 0%.
+                        egui::ProgressBar::new(0.0).animate(true)
+                    };
+                    ui.add(progress_bar);
+                }
+                if !self.mvt_auto_oto.status.is_empty() { ui.label(&self.mvt_auto_oto.status); }
+                ui.separator();
+                let proposals_height = (ui.available_height() - 12.0).max(80.0);
+                egui::ScrollArea::horizontal().id_salt("mvt_auto_oto_horizontal").show(ui, |ui| {
+                  egui::ScrollArea::vertical().id_salt("mvt_auto_oto_vertical").max_height(proposals_height).show(ui, |ui| {
+                    egui::Grid::new("mvt_auto_oto_proposals").striped(true).min_col_width(58.0).show(ui, |ui| {
+                        ui.label(tr!("modal.auto_oto.col.apply")); ui.label(tr!("modal.auto_oto.col.alias")); ui.label("Offset"); ui.label("Consonant"); ui.label("Cutoff"); ui.label("Preutterance"); ui.label("Overlap"); ui.label(tr!("modal.auto_oto.col.result")); ui.end_row();
+                        for proposal in &mut self.mvt_auto_oto.proposals {
+                            ui.add_enabled(proposal.values.is_some() || proposal.proposed_alias.is_some(), egui::Checkbox::new(&mut proposal.selected, ""));
+                            crate::app::layout::vertical(ui, is_rtl, |ui| {
+                                if proposal.new_entry {
+                                    if let Some(alias) = &mut proposal.proposed_alias {
+                                        crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                                            ui.label("+ Nova entrada");
+                                            ui.add(egui::TextEdit::singleline(alias).desired_width(150.0));
+                                        });
+                                    }
+                                } else if let Some(alias) = &mut proposal.proposed_alias {
+                                    crate::app::layout::horizontal(ui, is_rtl, |ui| {
+                                        ui.label(format!("{} →", proposal.alias));
+                                        ui.add(egui::TextEdit::singleline(alias).desired_width(150.0));
+                                    });
+                                } else {
+                                    ui.label(&proposal.alias);
+                                }
+                                ui.label(egui::RichText::new(&proposal.filename).small());
+                            });
+                            if let Some(values) = proposal.values {
+                                ui.label(format!("{:.1}", values.offset)); ui.label(if proposal.apply_fields[1] { format!("{:.1}", values.consonant) } else { "—".into() });
+                                ui.label(format!("{:.1}", values.cutoff)); ui.label(if proposal.apply_fields[3] { format!("{:.1}", values.preutter) } else { "—".into() });
+                                ui.label(if proposal.apply_fields[4] { format!("{:.1}", values.overlap) } else { "—".into() });
+                            } else {
+                                ui.label("—"); ui.label("—"); ui.label("—"); ui.label("—"); ui.label("—");
+                            }
+                            ui.label(&proposal.message);
+                            ui.end_row();
+                        }
+                    });
+                  });
                 });
             });
 
         self.ui.show_auto_oto = open;
+        if self.config.mvt_auto_oto.language != previous_mvt_settings.language {
+            self.mvt_auto_oto.align_models.clear();
+            self.mvt_auto_oto.models_language = None;
+        }
+        if self.config.mvt_auto_oto.language != previous_mvt_settings.language
+            || self.config.mvt_auto_oto.oto_scheme != previous_mvt_settings.oto_scheme
+            || self.config.mvt_auto_oto.align_model != previous_mvt_settings.align_model
+            || self.config.mvt_auto_oto.refine_model != previous_mvt_settings.refine_model
+            || (self.config.mvt_auto_oto.margin_ms - previous_mvt_settings.margin_ms).abs() > f64::EPSILON {
+            self.save_prefs();
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        if open && self.mvt_auto_oto.models_language.as_deref() != Some(self.config.mvt_auto_oto.language.as_str())
+            && !self.mvt_auto_oto.refreshing_models && !self.mvt_auto_oto.running {
+            crate::app::mvt_auto_oto::refresh_models(self.config.mvt_auto_oto.clone(), &mut self.mvt_auto_oto);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        if start_analysis { self.start_mvt_auto_oto(); }
+        if apply_proposals { self.apply_mvt_auto_oto_proposals(); }
     }
 
     fn modal_update_notification(&mut self, ctx: &egui::Context) {
@@ -903,7 +1011,7 @@ impl CopaibaApp {
                         });
                         
                         ui.add_space(16.0);
-                        ui.horizontal(|ui| {
+                        crate::app::layout::horizontal(ui, self.is_rtl(), |ui| {
                             if ui.button(RichText::new("Atualizar Agora").strong().color(egui::Color32::from_rgb(137, 180, 250))).clicked() {
                                 if let Some(url) = info.download_url {
                                     #[cfg(not(target_arch = "wasm32"))]

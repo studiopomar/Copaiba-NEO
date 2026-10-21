@@ -3,7 +3,11 @@ use super::state::{CopaibaApp, ShortcutProfile};
 
 impl CopaibaApp {
     pub fn show_waveform_panel(&mut self, ctx: &egui::Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default()
+            .frame(egui::Frame::new()
+                .fill(ctx.style().visuals.panel_fill)
+                .inner_margin(egui::Margin::same(12)))
+            .show(ctx, |ui| {
             let (has_entries, tab_selected, _filtered_len) = {
                 let tab = self.cur();
                 (tab.entries.len(), tab.selected, tab.filtered.len())
@@ -18,6 +22,21 @@ impl CopaibaApp {
 
             let idx_opt = self.cur().filtered.get(tab_selected).copied();
             if let Some(idx) = idx_opt {
+                let entry_summary = {
+                    let tab = self.cur();
+                    tab.filtered.get(tab_selected).and_then(|entry_idx| tab.entries.get(*entry_idx))
+                        .map(|entry| (entry.filename.clone(), entry.alias.clone()))
+                };
+                if let Some((filename, alias)) = entry_summary {
+                    egui::Frame::new()
+                        .fill(ui.visuals().faint_bg_color)
+                        .inner_margin(egui::Margin::symmetric(12, 8))
+                        .corner_radius(egui::CornerRadius::same(8))
+                        .show(ui, |ui| {
+                            crate::app::design::section_title(ui, self.is_rtl(), alias, filename);
+                        });
+                    ui.add_space(crate::app::design::SPACE_2);
+                }
                 let full_path_key = {
                     let tab = self.cur();
                     let fname = tab.entries[idx].filename.clone();
@@ -247,8 +266,9 @@ impl CopaibaApp {
             }
         }
 
-        // Ctrl+A — select all
-        if ctrl && ctx.input(|i| i.key_pressed(egui::Key::A)) && ctx.memory(|m| m.focused().is_none()) {
+        // Command+A on macOS, Ctrl+A elsewhere — select all visible aliases.
+        let command = ctx.input(|i| i.modifiers.command);
+        if command && ctx.input(|i| i.key_pressed(egui::Key::A)) && ctx.memory(|m| m.focused().is_none()) {
             let tab = self.cur_mut();
             tab.multi_selection.clear();
             for fi in 0..tab.filtered.len() { tab.multi_selection.insert(fi); }

@@ -46,8 +46,12 @@ pub fn get_hiragana_to_romaji() -> HashMap<&'static str, &'static str> {
     map.insert("びゃ", "bya"); map.insert("びゅ", "byu"); map.insert("びょ", "byo");
     map.insert("ぴゃ", "pya"); map.insert("ぴゅ", "pyu"); map.insert("ぴょ", "pyo");
     
-    // V-series
-    map.insert("ヴぁ", "va"); map.insert("ヴぃ", "vi"); map.insert("ヴ", "vu"); map.insert("ヴぇ", "ve"); map.insert("ヴぉ", "vo");
+    // Foreign-sound combinations used by extended Japanese VCV banks.
+    map.insert("ふぁ", "fa"); map.insert("ふぃ", "fi"); map.insert("ふぇ", "fe"); map.insert("ふぉ", "fo");
+    map.insert("ちぇ", "che"); map.insert("しぇ", "she"); map.insert("じぇ", "je");
+    map.insert("つぁ", "tsa"); map.insert("つぃ", "tsi"); map.insert("つぇ", "tse"); map.insert("つぉ", "tso");
+    map.insert("ゔぁ", "va"); map.insert("ゔぃ", "vi"); map.insert("ゔ", "vu"); map.insert("ゔぇ", "ve"); map.insert("ゔぉ", "vo");
+    map.insert("いぇ", "ye");
     
     // Small variations
     map.insert("てぃ", "ti"); map.insert("とぅ", "tu"); map.insert("でぃ", "di"); map.insert("どぅ", "du");
@@ -66,6 +70,7 @@ pub fn get_romaji_to_hiragana() -> HashMap<&'static str, &'static str> {
     map.insert("tu", "つ");
     map.insert("hu", "ふ");
     map.insert("zi", "じ");
+    map.insert("vu", "ゔ");
     map
 }
 

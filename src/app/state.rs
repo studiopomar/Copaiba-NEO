@@ -337,6 +337,8 @@ pub struct AppConfig {
     pub play_ui_sounds: bool,
     pub theme: AppTheme,
     pub table_on_right: bool,
+    #[serde(default)]
+    pub mvt_auto_oto: crate::app::mvt_auto_oto::MvtSettings,
 }
 
 impl Default for AppConfig {
@@ -369,6 +371,7 @@ impl Default for AppConfig {
             play_ui_sounds: true,
             theme: AppTheme::Dark,
             table_on_right: false,
+            mvt_auto_oto: crate::app::mvt_auto_oto::MvtSettings::default(),
         }
     }
 }
@@ -413,8 +416,8 @@ pub struct CopaibaApp {
 
     pub alias_conv_to_hiragana: bool,
 
-    // Auto-Oto State
-    pub auto_oto_settings: crate::app::auto_oto::AutoOtoSettings,
+    // Auto-Oto integration state
+    pub mvt_auto_oto: crate::app::mvt_auto_oto::MvtUiState,
 
     // Logic
     pub session_start_time: f64,
@@ -465,7 +468,7 @@ impl Default for CopaibaApp {
             batch_edit_is_relative: false,
             alias_conv_to_hiragana: true,
 
-            auto_oto_settings: crate::app::auto_oto::AutoOtoSettings::default(),
+            mvt_auto_oto: crate::app::mvt_auto_oto::MvtUiState::default(),
 
             session_start_time: 0.0,
             last_auto_save_time: 0.0,
@@ -485,5 +488,16 @@ impl CopaibaApp {
 
     pub fn is_rtl(&self) -> bool {
         self.config.language == "ar-SA"
+    }
+}
+
+impl Drop for CopaibaApp {
+    fn drop(&mut self) {
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(cancel) = &self.mvt_auto_oto.cancel {
+            cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::app::mvt_auto_oto::shutdown_owned_service();
     }
 }
