@@ -42,7 +42,9 @@ jobs:
     - name: Package Linux builds
       run: |
         mkdir -p release-assets
-        mv ./*.AppImage "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.AppImage"
+        linux_appimage_source="$(find . -maxdepth 1 -type f -name '*.AppImage' ! -name 'linuxdeploy-x86_64.AppImage' -print -quit)"
+        test -n "$linux_appimage_source"
+        mv "$linux_appimage_source" "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.AppImage"
         tar -czf "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.tar.gz" -C target/release copaiba_neo
     - name: Upload Linux builds
       uses: actions/upload-artifact@v4
