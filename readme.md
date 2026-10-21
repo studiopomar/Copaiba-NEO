@@ -18,7 +18,7 @@
 
 O Copaiba NEO ajuda a criar e revisar os parâmetros de pronúncia de bancos de voz. A tabela de aliases e a waveform oferecem edição numérica e visual de `Offset`, `Overlap`, `Preutterance`, `Consonant` e `Cutoff`.
 
-> **Versão atual:** `0.246.0`, identificada no aplicativo como **v246 Damasco**. Esta release é compilada para Windows x86_64, macOS universal e Linux x86_64.
+> **Versão atual:** **v246 Damasco**. Esta release é compilada para Windows x86_64, macOS universal e Linux x86_64.
 
 ## Sumário
 
@@ -68,7 +68,7 @@ Para aliases japoneses, informe kana ou romaji. Para outros idiomas, use fonemas
 
 | Versão | Codinome | Data | Situação | Notas |
 | --- | --- | --- | --- | --- |
-| [`v0.246.0`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v0.246.0) | Damasco | 21/10/2026 | Release atual | [Notas](changelog.md#v246-damasco---2026-10-21) |
+| [`v246`](https://github.com/studiopomar/Copaiba-NEO/releases/latest) | Damasco | 21/10/2026 | Release atual | [Notas](changelog.md#v246-damasco---2026-10-21) |
 | [`v201`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v201) | Carambola | 10/05/2026 | Release | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v201) |
 | [`v190`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v190) | Bergamota | 11/04/2026 | Release | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v190) |
 | [`v150_Canary`](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v150_Canary) | Abacaxi | 26/03/2026 | Canary | [Notas](https://github.com/studiopomar/Copaiba-NEO/releases/tag/v150_Canary) |

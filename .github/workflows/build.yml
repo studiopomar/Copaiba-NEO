@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  DISPLAY_VERSION: v246
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -44,8 +47,8 @@ jobs:
         mkdir -p release-assets
         linux_appimage_source="$(find . -maxdepth 1 -type f -name '*.AppImage' ! -name 'linuxdeploy-x86_64.AppImage' -print -quit)"
         test -n "$linux_appimage_source"
-        mv "$linux_appimage_source" "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.AppImage"
-        tar -czf "release-assets/Copaiba-NEO-${GITHUB_REF_NAME}-Linux-x86_64.tar.gz" -C target/release copaiba_neo
+        mv "$linux_appimage_source" "release-assets/Copaiba-NEO-${DISPLAY_VERSION}-Linux-x86_64.AppImage"
+        tar -czf "release-assets/Copaiba-NEO-${DISPLAY_VERSION}-Linux-x86_64.tar.gz" -C target/release copaiba_neo
     - name: Upload Linux builds
       uses: actions/upload-artifact@v4
       with:
@@ -63,7 +66,7 @@ jobs:
     - name: Package Windows build
       run: |
         New-Item -ItemType Directory -Force release-assets | Out-Null
-        Copy-Item target/release/copaiba_neo.exe "release-assets/Copaiba-NEO-${{ github.ref_name }}-Windows-x86_64.exe"
+        Copy-Item target/release/copaiba_neo.exe "release-assets/Copaiba-NEO-${{ env.DISPLAY_VERSION }}-Windows-x86_64.exe"
     - name: Upload Windows build
       uses: actions/upload-artifact@v4
       with:
@@ -104,7 +107,7 @@ jobs:
         </plist>
         EOF
         ditto -c -k --sequesterRsrc --keepParent "$app" \
-          "release-assets/Copaiba-NEO-${{ github.ref_name }}-macOS-universal.zip"
+          "release-assets/Copaiba-NEO-${{ env.DISPLAY_VERSION }}-macOS-universal.zip"
     - name: Upload universal macOS build
       uses: actions/upload-artifact@v4
       with:
